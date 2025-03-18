@@ -33,8 +33,17 @@ class KnowledgeService:
         
         return knowledge.id
         
-    def search_knowledge(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        """搜索相关知识"""
+    def search_relevant_knowledge(self, query: str, top_k: int = 5, min_score_threshold: float = 0.6) -> str:
+        """搜索相关知识
+        
+        Args:
+            query: 查询文本
+            top_k: 返回的最大结果数量
+            min_score_threshold: 最小相似度阈值，低于此值的结果将被过滤掉
+        
+        Returns:
+            组合后的相关知识文本
+        """
         # 获取查询的嵌入向量
         query_embedding = self.embedder.get_embeddings(query)[0]
         self.logger.info(
@@ -42,46 +51,46 @@ class KnowledgeService:
             f"向量维度: {len(query_embedding)}\n"
             f"前5个维度: {query_embedding[:5]}"
         )
+        
+        # 在向量数据库中搜索，获取更多结果以便后续过滤
+        search_k = top_k * 3  # 获取更多结果用于后续过滤
+        results = self.vector_store.search(query_embedding, top_k=search_k)
+        self.logger.info(f"知识库搜索原始结果: {results}")
+        
+        # 1. 相似度阈值过滤：过滤掉相似度低于阈值的结果
+        threshold_filtered = [item for item in results if item["score"] >= min_score_threshold]
+        self.logger.info(f"知识库搜索相似度阈值过滤后结果: {threshold_filtered}")
+        # 2. 按照score从大到小排序
+        sorted_results = sorted(threshold_filtered, key=lambda x: x["score"], reverse=True)
+        
+        # 3. 关键词后处理过滤：检查结果是否包含查询词的任何部分
+        # 将查询拆分为关键词
+        keywords = [kw.strip() for kw in query.split() if len(kw.strip()) > 1]
+        
+        keyword_filtered = []
+        for item in sorted_results:
+            content = item.get("content", "")
+            # 检查内容是否包含任何关键词
+            if any(keyword in content for keyword in keywords):
+                keyword_filtered.append(item)
+            elif len(keyword_filtered) < 2:  # 保留少量高分但不包含关键词的结果
+                keyword_filtered.append(item)
+        self.logger.info(f"知识库搜索关键词过滤后结果: {keyword_filtered}")
+        # 4. 取前top_k个结果
+        top_results = keyword_filtered[:top_k]
+        self.logger.info(f"知识库搜索前top_k个结果: {top_results}")
+        
+        # 5. 提取content字段并组装成字符串
+        content_list = [item["content"] for item in top_results if "content" in item]
+        
+        # 如果没有结果，返回提示信息
+        if not content_list:
+            return "未找到相关知识。"
+        
+        # 组装成字符串
+        combined_content = "\n\n".join(content_list)
+        # self.logger.info(f"combined_content: {combined_content[:200]}...")  # 只记录前200个字符
+        
+        return combined_content
 
-        
-        # 在向量数据库中搜索
-        results = self.vector_store.search(query_embedding, top_k=top_k)
-        
-        return results 
-
-    def search_relevant_knowledge(self, query: str, top_k: int = 5) -> str:
-        """
-        搜索跟输入文本相关的测试用例
-        
-        Args:
-            query: 查询文本
-            
-        Returns:
-            str: 跟查询需求有关的测试用例内容，如果没有找到则返回空字符串
-        """
-        try:
-            # 复用已有的search_knowledge函数
-            results = self.search_knowledge(query, top_k=top_k)
-            # self.logger.info(f"知识库搜索结果: {results}")
-            
-            if not results:
-                return ""
-            
-            # 过滤掉第一条（因为它是查询本身）并处理其余结果
-            valid_results = [r for r in results[1:] if r['case_name'] and r['steps'] and r['expected']]
-            
-            # 拼接测试用例文本
-            knowledge_texts = []
-            for item in valid_results:
-                case_text = (
-                    f"测试用例描述: {item['case_name'].strip()}\n"
-                    f"测试步骤:\n{item['steps'].strip()}\n"
-                    f"预期结果:\n{item['expected'].strip()}"
-                )
-                knowledge_texts.append(case_text)
-            
-            return "\n\n".join(knowledge_texts)
-            
-        except Exception as e:
-            self.logger.warning(f"获取知识上下文失败: {str(e)}")
-            return ""
+   

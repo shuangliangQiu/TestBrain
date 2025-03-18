@@ -134,9 +134,8 @@ class MilvusVectorStore:
             param=search_params,
             limit=top_k,
             output_fields=[
-                "case_name", "case_id", "module", 
-                "precondition", "steps", "expected",
-                "tags", "priority", "creator", "create_time"
+                "content", "metadata", "source", 
+                "doc_type", "chunk_id", "upload_time"
             ]
         )
         
@@ -146,16 +145,12 @@ class MilvusVectorStore:
                 ret.append({
                     "id": hit.id,
                     "score": hit.score,
-                    "case_name": hit.entity.get("case_name"),
-                    "case_id": hit.entity.get("case_id"),
-                    "module": hit.entity.get("module"),
-                    "precondition": hit.entity.get("precondition"),
-                    "steps": hit.entity.get("steps"),
-                    "expected": hit.entity.get("expected"),
-                    "tags": hit.entity.get("tags"),
-                    "priority": hit.entity.get("priority"),
-                    "creator": hit.entity.get("creator"),
-                    "create_time": hit.entity.get("create_time")
+                    "content": hit.entity.get("content"),
+                    "metadata": hit.entity.get("metadata"),
+                    "source": hit.entity.get("source"),
+                    "doc_type": hit.entity.get("doc_type"),
+                    "chunk_id": hit.entity.get("chunk_id"),
+                    "upload_time": hit.entity.get("upload_time")
                 })
         
         collection.release()
