@@ -8,7 +8,7 @@ urlpatterns = [
     path('review/', views.review_view, name='review'),
     path('knowledge/', views.knowledge_view, name='knowledge'),
     #知识库文件上传页面
-    path('upload/', views.upload_test_cases, name='upload_test_cases'),
+    path('upload/', views.upload_single_file, name='upload_single_file'),
 
     
     # API路由

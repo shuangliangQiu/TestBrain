@@ -61,12 +61,12 @@
 
 {% block content %}
 <div class="upload-container">
-    <h4 class="mb-4">上传测试用例Excel文件</h4>
+    <h4 class="mb-4">上传知识库文件</h4>
     <form method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return handleSubmit(event)">
         {% csrf_token %}
         <div class="upload-area">
-            <input type="file" name="excel_file" id="excel_file" style="display: none;" accept=".xlsx,.xls" onchange="updateFileName(this)">
-            <button type="button" class="btn btn-primary file-input-button" onclick="document.getElementById('excel_file').click()">
+            <input type="file" name="single_file" id="single_file" style="display: none;" onchange="updateFileName(this)">
+            <button type="button" class="btn btn-primary file-input-button" onclick="document.getElementById('single_file').click()">
                 选择文件
             </button>
             <div class="upload-hint">

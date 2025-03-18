@@ -21,7 +21,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import os
 from datetime import datetime
-from .milvus_helper import get_embedding_model, init_milvus_collection, process_excel
+from .milvus_helper import get_embedding_model, init_milvus_collection, process_singel_file
+from langchain.text_splitter import CharacterTextSplitter
+import hashlib
+import numpy as np
+import gc
 
 logger = get_logger(__name__)
 
@@ -429,72 +433,162 @@ def search_knowledge(request):
         })
 
 @csrf_exempt
-def upload_test_cases(request):
-    """处理测试用例上传的视图函数"""
+def upload_single_file(request):
+    """处理文件上传的视图函数"""
     if request.method == 'GET':
         return render(request, 'upload.html')
     elif request.method == 'POST':
-        try:
-            # 1. 接收文件
-            uploaded_file = request.FILES.get('excel_file')
-            if not uploaded_file:
-                return JsonResponse({'success': False, 'error': '未接收到文件'})
+        if 'single_file' in request.FILES:  # 修改这里匹配前端的 name 属性
+            uploaded_file = request.FILES['single_file']  # 修改这里匹配前端的 name 属性
+            file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)
             
-            if not uploaded_file.name.endswith(('.xlsx', '.xls')):
-                return JsonResponse({'success': False, 'error': '仅支持Excel文件'})
-
-            # 2. 保存临时文件
-            save_dir = 'uploads/'
-            os.makedirs(save_dir, exist_ok=True)
-            file_path = os.path.join(save_dir, f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx")
-            with open(file_path, 'wb+') as f:
-                for chunk in uploaded_file.chunks():
-                    f.write(chunk)
-
-            # 3. 处理Excel
-            test_cases, texts = process_excel(file_path)  # 获取原始数据和文本
-            if not test_cases:
-                return JsonResponse({'success': False, 'error': 'Excel中无有效测试用例'})
-
-            # 4. 生成向量
-            model = get_embedding_model()
-            embeddings = model.encode(texts, normalize_embeddings=True)
-            logger.info(f"上传的向量维度: {embeddings.shape}, 前5个维度值: {embeddings[0][:5]}")
-
-            # 5. 构建文档
-            documents = []
-            for i, row in enumerate(test_cases):
-                doc = {
-                    "embedding": embeddings[i].tolist(),
-                    "case_name": str(row['用例名称']),
-                    "case_id": str(row['ID']),
-                    "module": str(row['所属模块']),
-                    "precondition": str(row['前置条件']),
-                    "steps": str(row['步骤描述']),
-                    "expected": str(row['预期结果']),
-                    "tags": str(row['标签']),
-                    "priority": str(row['用例等级']),
-                    "creator": str(row['创建人']),
-                    "create_time": str(row['创建时间'])
-                }
-                documents.append(doc)
-
-            # 6. 添加到向量数据库
-            vector_store = MilvusVectorStore()
-            vector_store.add_documents(documents)
-            
-            return JsonResponse({
-                'success': True, 
-                'count': len(documents),
-                'message': f'成功导入 {len(documents)} 条测试用例'
-            })
-            
-        except Exception as e:
-            logger.error(f"处理上传文件时出错: {str(e)}", exc_info=True)
-            return JsonResponse({'success': False, 'error': str(e)})
-        finally:
-            # 清理临时文件
+            # 先检查文件是否存在
             if os.path.exists(file_path):
-                os.remove(file_path)
+                return JsonResponse({
+                    'success': False,
+                    'error': '文件已存在'
+                })
                 
-    return JsonResponse({'success': False, 'error': '不支持的请求方法'})
+            try:
+                # 1. 接收文件
+                logger.info(f"Uploaded file: {uploaded_file}")
+                if not uploaded_file:
+                    return JsonResponse({'success': False, 'error': '未接收到文件'})
+                
+                file_categories = {
+                    "CSV": [".csv"],
+                    "E-mail": [".eml", ".msg", ".p7s"],
+                    "EPUB": [".epub"],
+                    "Excel": [".xls", ".xlsx"],
+                    "HTML": [".html"],
+                    "Image": [".bmp", ".heic", ".jpeg", ".png", ".tiff"],
+                    "Markdown": [".md"],
+                    "Org Mode": [".org"],
+                    "Open Office": [".odt"],
+                    "PDF": [".pdf"],
+                    "Plain text": [".txt"],
+                    "PowerPoint": [".ppt", ".pptx"],
+                    "reStructured Text": [".rst"],
+                    "Rich Text": [".rtf"],
+                    "TSV": [".tsv"],
+                    "Word": [".doc", ".docx"],
+                    "XML": [".xml"]
+                }
+                file_type = os.path.splitext(uploaded_file.name)[1]
+                logger.info(f"上传文件类型: {file_type}")
+                logger.info(f"上传文件名: {uploaded_file.name}")
+                
+                if not file_type:
+                    logger.error("文件没有扩展名")
+                    return JsonResponse({'success': False, 'error': '文件必须包含扩展名'})
+                
+                # 获取所有支持的文件扩展名
+                supported_extensions = [ext.lower() for exts in file_categories.values() for ext in exts]
+
+                if file_type not in supported_extensions:
+                    return JsonResponse({'success': False, 'error': '不支持的文件类型'})
+                
+                # 2. 保存临时文件
+                save_dir = 'uploads/'
+                os.makedirs(save_dir, exist_ok=True)
+                file_path = os.path.join(save_dir, f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}{uploaded_file.name}")
+                with open(file_path, 'wb+') as f:
+                    for chunk in uploaded_file.chunks():
+                        f.write(chunk)
+                logger.info(f"临时文件保存成功, 文件保存路径: {file_path}")
+
+                # 3. 处理文件
+                chunks = process_singel_file(file_path)  # 获取原始数据和文本
+                if not chunks:
+                    return JsonResponse({'success': False, 'error': '文件中无有效内容'})
+
+                # 提取所有chunk.text并记录日志
+                if isinstance(chunks, list):
+                    # 直接从chunks中提取text属性
+                    text_contents = []
+                    for i, chunk in enumerate(chunks):
+                        if hasattr(chunk, 'text'):
+                            text_contents.append(str(chunk.text))
+                        else:
+                            text_contents.append(str(chunk))
+                
+                    logger.info(f"共提取了 {len(text_contents)} 个文本内容")
+                else:
+                    # 单一文本块的情况
+                    if hasattr(chunks, 'text'):
+                        text_contents = [str(chunks.text)]
+                    else:
+                        text_contents = [str(chunks)]
+                    logger.info(f"提取了单个文本内容: {text_contents[0][:100]}...")
+
+                # 直接生成所有文本内容的向量
+                logger.info("开始生成向量")
+                start_time = datetime.now()
+
+                try:
+                    # 直接为所有文本内容生成向量
+                    all_embeddings = embedder.get_embeddings(texts=text_contents, show_progress_bar=False)
+                    logger.info(f"成功生成 {len(all_embeddings)} 个向量")
+                    
+                    # 确保embeddings是列表格式
+                    embeddings_list = []
+                    for emb in all_embeddings:
+                        if hasattr(emb, 'tolist'):
+                            emb = emb.tolist()
+                        embeddings_list.append(emb)
+                    
+                    # 准备插入数据
+                    data_to_insert = []
+                    for i in range(len(text_contents)):
+                        item = {
+                            "embedding": embeddings_list[i],  # 单个embedding向量
+                            "content": text_contents[i],      # 文本内容
+                            "metadata": '{}',                 # 元数据
+                            "source": file_path,              # 来源
+                            "doc_type": file_type,            # 文档类型
+                            "chunk_id": f"{hashlib.md5(os.path.basename(file_path).encode()).hexdigest()[:10]}_{i:04d}",  # 块ID
+                            "upload_time": datetime.now().isoformat()  # 上传时间
+                        }
+                        data_to_insert.append(item)
+                    
+                    # 插入数据到Milvus
+                    logger.info(f"开始往milvus中插入 {len(data_to_insert)} 条数据")
+                    vector_store.add_data(data_to_insert)
+                    logger.info("数据插入完成")
+                    
+                    total_time = (datetime.now() - start_time).total_seconds()
+                    logger.info(f"向量生成和插入完成，总耗时: {total_time:.2f} 秒")
+                    
+                    return JsonResponse({
+                        'success': True, 
+                        'count': len(text_contents),
+                        'message': f'成功导入文件到知识库'
+                    })
+                    
+                except Exception as e:
+                    logger.error(f"生成或插入向量时出错: {str(e)}", exc_info=True)
+                    return JsonResponse({
+                        'success': False, 
+                        'error': str(e)
+                    })
+                
+            except Exception as e:
+                logger.error(f"处理上传文件时出错: {str(e)}", exc_info=True)
+                return JsonResponse({
+                    'success': False, 
+                    'error': str(e)
+                })
+            finally:
+                # 清理临时文件
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '未接收到文件'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': '不支持的请求方法'
+    })

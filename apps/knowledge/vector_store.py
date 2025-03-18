@@ -14,7 +14,7 @@ class MilvusVectorStore:
     def __init__(self, 
                 host: str = "localhost", 
                 port: str = "19530",
-                collection_name: str = "test_cases"):
+                collection_name: str = "vv_knowledge_collection"):
         self.host = host
         self.port = port
         self.collection_name = collection_name
@@ -42,74 +42,51 @@ class MilvusVectorStore:
         logger.info("进入到_ensure_collection方法")
         if not utility.has_collection(self.collection_name):
             logger.info(f"集合 {self.collection_name} 不存在，开始创建...")
+            # 定义集合模式
             fields = [
                 FieldSchema(
-                    name="id", 
-                    dtype=DataType.INT64, 
-                    is_primary=True, 
+                    name="id",
+                    dtype=DataType.INT64,
+                    is_primary=True,
                     auto_id=True
                 ),
                 FieldSchema(
-                    name="embedding", 
+                    name="embedding",
                     dtype=DataType.FLOAT_VECTOR,
-                    dim=1024
-                ),
-                # 测试用例基本信息
-                FieldSchema(
-                    name="case_name",  # 用例名称
-                    dtype=DataType.VARCHAR,
-                    max_length=256
+                    dim=1024  
                 ),
                 FieldSchema(
-                    name="case_id",    # 用例ID
-                    dtype=DataType.VARCHAR,
-                    max_length=64
-                ),
-                FieldSchema(
-                    name="module",     # 所属模块
-                    dtype=DataType.VARCHAR,
-                    max_length=512
-                ),
-                # 测试用例详细内容
-                FieldSchema(
-                    name="precondition",  # 前置条件
-                    dtype=DataType.VARCHAR,
-                    max_length=1024
-                ),
-                FieldSchema(
-                    name="steps",         # 步骤描述
+                    name="content",    # 存储文档片段的实际内容
                     dtype=DataType.VARCHAR,
                     max_length=4096
                 ),
                 FieldSchema(
-                    name="expected",      # 预期结果
+                    name="metadata",   # 存储文档的元数据（JSON格式字符串）
                     dtype=DataType.VARCHAR,
-                    max_length=2048
-                ),
-                # 其他元数据
-                FieldSchema(
-                    name="tags",          # 标签
-                    dtype=DataType.VARCHAR,
-                    max_length=256
+                    max_length=1024
                 ),
                 FieldSchema(
-                    name="priority",      # 用例等级
+                    name="source",     # 原始文档的来源信息（文件路径或URL）
+                    dtype=DataType.VARCHAR,
+                    max_length=512
+                ),
+                FieldSchema(
+                    name="doc_type",   # 文档类型（pdf/doc/excel等）
                     dtype=DataType.VARCHAR,
                     max_length=32
                 ),
                 FieldSchema(
-                    name="creator",       # 创建人
+                    name="chunk_id",   # 分片ID，用于追踪文档的不同部分
                     dtype=DataType.VARCHAR,
-                    max_length=64
+                    max_length=128
                 ),
                 FieldSchema(
-                    name="create_time",   # 创建时间
+                    name="upload_time",
                     dtype=DataType.VARCHAR,
-                    max_length=64
-                )
+                    max_length=50
+                )  # 添加存储时间的字段
             ]
-            
-            schema = CollectionSchema(fields=fields, description="测试用例知识库")
+            schema = CollectionSchema(fields=fields, description="vv知识库")
             collection = Collection(name=self.collection_name, schema=schema)
             logger.info("集合创建成功")
             
@@ -133,59 +110,15 @@ class MilvusVectorStore:
             collection.load()
             return collection
         
-    def add_documents(self, documents: List[Dict[str, Any]]):
+    def add_data(self, data: List[Dict[str, Any]]):
         """添加文档到向量数据库"""
-        logger.info("进入到add_documents方法")
+        logger.info("进入到add_data方法")
         collection = Collection(self.collection_name)
-        
-        # 打印第一条文档的内容，用于调试
-        if documents:
-            logger.info(f"First document content: {documents[0]}")
-        
-        # 准备数据
-        embeddings = [doc["embedding"] for doc in documents]
-        
-        # 如果是 numpy array，先转换为列表
-        if isinstance(embeddings[0], np.ndarray):
-            embeddings = [emb.astype(np.float32) for emb in embeddings]
-            
-        # 一次插入一条记录
-        for i, embedding in enumerate(embeddings):
-            # 打印当前文档的所有字段，用于调试
-            logger.info(f"Document {i} fields:")
-            for key, value in documents[i].items():
-                if key != "embedding":
-                    logger.info("*"*100)
-                    logger.info(f"{key}: {value}")
-                    logger.info("*"*100)
-                
-            data = {
-                "embedding": embedding,
-                "case_name": str(documents[i].get("case_name", "")),  # 确保转换为字符串
-                "case_id": str(documents[i].get("case_id", "")),
-                "module": str(documents[i].get("module", "")),
-                "precondition": str(documents[i].get("precondition", "")),
-                "steps": str(documents[i].get("steps", "")),
-                "expected": str(documents[i].get("expected", "")),
-                "tags": str(documents[i].get("tags", "")),
-                "priority": str(documents[i].get("priority", "")),
-                "creator": str(documents[i].get("creator", "")),
-                "create_time": str(documents[i].get("create_time", ""))
-            }
-            
-            # 打印准备插入的数据，用于调试
-            logger.info(f"Inserting data for document {i}:")
-            for key, value in data.items():
-                if key != "embedding":  # 不打印embedding，太长了
-                    logger.info("$"*100)
-                    logger.info(f"{key}: {value}")
-                    logger.info("$"*100)
-            try:
-                collection.insert(data)
-            except Exception as e:
-                logger.error(f"Insert error at index {i}: {str(e)}")
-                logger.error(f"Data keys: {data.keys()}")
-                raise
+
+        try:
+            collection.insert(data)
+        except Exception as e:
+            raise
                 
         collection.flush()
         

@@ -20,11 +20,11 @@ class BGEM3Embedder:
         self.model = SentenceTransformer(model_name)
 
         
-    def get_embeddings(self, texts: Union[str, List[str]]) -> List[List[float]]:
+    def get_embeddings(self, texts: Union[str, List[str]], show_progress_bar: bool = False) -> List[List[float]]:
         """获取文本的嵌入向量"""
         if isinstance(texts, str):
             texts = [texts]
-        embeddings = self.model.encode(texts, normalize_embeddings=True)
+        embeddings = self.model.encode(sentences=texts, normalize_embeddings=True, show_progress_bar=show_progress_bar)
         return embeddings.tolist()
     
     def compute_similarity(self, text1: str, text2: str) -> float:
