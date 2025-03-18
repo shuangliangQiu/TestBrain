@@ -66,7 +66,7 @@ def index(request):
     """页面-首页视图"""
     # 获取测试用例统计数据
     total_test_cases = TestCase.objects.count()
-    pending_review_count = TestCase.objects.filter(status='pending_review').count()
+    pending_count = TestCase.objects.filter(status='pending').count()
     approved_count = TestCase.objects.filter(status='approved').count()
     rejected_count = TestCase.objects.filter(status='rejected').count()
     
@@ -75,7 +75,7 @@ def index(request):
     
     context = {
         'total_test_cases': total_test_cases,
-        'pending_review_count': pending_review_count,
+        'pending_count': pending_count,
         'approved_count': approved_count,
         'rejected_count': rejected_count,
         'recent_test_cases': recent_test_cases,
@@ -217,7 +217,7 @@ def save_test_case(request):
                 expected_results='\n'.join(test_case.get('expected_results', [])),
                 requirements=requirement,
                 llm_provider=llm_provider,
-                status='pending_review'  # 默认状态为待评审
+                status='pending'  # 默认状态为待评审
                 # created_by=request.user  # 如果需要记录创建用户，取消注释此行
             )
             test_cases_to_create.append(test_case_instance)
@@ -249,7 +249,7 @@ def save_test_case(request):
 # @login_required 先屏蔽登录
 def review_view(request):
     """页面-测试用例评审页面视图"""
-    pending_test_cases = TestCase.objects.filter(status='pending_review')
+    pending_test_cases = TestCase.objects.filter(status='pending')
     approved_test_cases = TestCase.objects.filter(status='approved')
     rejected_test_cases = TestCase.objects.filter(status='rejected')
     
@@ -568,6 +568,7 @@ def case_review_detail(request):
 
 @require_http_methods(["GET"])
 def get_test_case(request, test_case_id):
+    """从mysql查询、获取单个测试用例"""
     try:
         test_case = TestCase.objects.get(id=test_case_id)
         return JsonResponse({
@@ -579,10 +580,26 @@ def get_test_case(request, test_case_id):
         })
     except TestCase.DoesNotExist:
         return JsonResponse({'error': '测试用例不存在'}, status=404)
+    
+    
+def get_test_cases(request, test_case_ids: str):
+    """从mysql查询、获取多个测试用例"""
+    try:
+        # 将逗号分隔的字符串转换为列表
+        ids = test_case_ids.split(',')
+        test_cases = TestCase.objects.filter(id__in=ids)
+        return JsonResponse({
+            'success': True,
+            'test_cases': list(test_cases)
+        })
+    except TestCase.DoesNotExist:
+        return JsonResponse({'error': '测试用例集合不存在'}, status=404)
+    
 
 @require_http_methods(["POST"])
 def update_test_case(request):
     data = json.loads(request.body)
+    logger.info(f"更新测试用例数据: {data}")
     try:
         test_case = TestCase.objects.get(id=data['test_case_id'])
         test_case.status = data['status']

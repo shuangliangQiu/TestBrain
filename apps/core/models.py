@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 class TestCase(models.Model):
     """测试用例模型"""
     STATUS_CHOICES = [
-        ('pending_review', '待评审'),
+        ('pending', '待评审'),
         ('approved', '评审通过'),
         ('rejected', '评审未通过'),
     ]
@@ -38,7 +38,7 @@ class TestCase(models.Model):
     status = models.CharField(
         max_length=20, 
         choices=STATUS_CHOICES, 
-        default='pending_review',
+        default='pending',
         verbose_name="评审状态"
     )
     created_by = models.ForeignKey(

@@ -15,6 +15,7 @@ urlpatterns = [
     
     # API路由
     path('api/test-case/<int:test_case_id>/', views.get_test_case, name='get_test_case'),
+    path('api/test-cases/<str:test_case_ids>/', views.get_test_cases, name='get_test_cases'),
     path('api/update-test-case/', views.update_test_case, name='update_test_case'),#更新单个测试用例的状态到mysql
     path('api/generate/', views.generate_api, name='generate_api'),
     path('core/save-test-case/', views.save_test_case, name='save_test_case'),#批量保存大模型生成的测试用例
