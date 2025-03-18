@@ -312,37 +312,6 @@ def review_api(request):
             'message': f'评审失败：{str(e)}'
         }, status=500)
 
-# @login_required 先屏蔽登录
-@require_http_methods(["POST"])
-def update_test_case_status(request):
-    """更新测试用例状态"""
-    try:
-        data = json.loads(request.body)
-        test_case_id = data.get('test_case_id')
-        status = data.get('status')
-        comments = data.get('comments', '')
-        
-        test_case = get_object_or_404(TestCase, id=test_case_id)
-        test_case.status = status
-        test_case.save()
-        
-        # 创建评审记录
-        review = TestCaseReview(
-            test_case=test_case,
-            reviewer=request.user,
-            review_comments=comments
-        )
-        review.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'测试用例状态已更新为 {dict(TestCase.STATUS_CHOICES).get(status)}'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        })
 
 # @login_required 先屏蔽登录
 def knowledge_view(request):
@@ -592,3 +561,37 @@ def upload_single_file(request):
         'success': False,
         'error': '不支持的请求方法'
     })
+
+
+def case_review_detail(request):
+    return render(request, 'case_review_detail.html')
+
+@require_http_methods(["GET"])
+def get_test_case(request, test_case_id):
+    try:
+        test_case = TestCase.objects.get(id=test_case_id)
+        return JsonResponse({
+            'id': test_case.id,
+            'description': test_case.description,
+            'test_steps': test_case.test_steps,
+            'expected_results': test_case.expected_results,
+            'status': test_case.status
+        })
+    except TestCase.DoesNotExist:
+        return JsonResponse({'error': '测试用例不存在'}, status=404)
+
+@require_http_methods(["POST"])
+def update_test_case(request):
+    data = json.loads(request.body)
+    try:
+        test_case = TestCase.objects.get(id=data['test_case_id'])
+        test_case.status = data['status']
+        test_case.description = data['description']
+        test_case.test_steps = data['test_steps']
+        test_case.expected_results = data['expected_results']
+        test_case.save()
+        return JsonResponse({'success': True})
+    except TestCase.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '测试用例不存在'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}) 

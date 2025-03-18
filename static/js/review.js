@@ -1,45 +1,46 @@
 // 测试用例评审页面专用脚本
 
-// 评审功能的 JavaScript 代码
-function reviewTestCase(testCaseId) {
-    console.log('开始评审测试用例，ID:', testCaseId);
-    
-    fetch('/api/review/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            test_case_id: testCaseId  // 使用正确的字段名
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('评审响应:', data);
-        if (data.success) {
-            alert('评审完成！');
-            // 可以添加页面刷新或状态更新的代码
-            location.reload();
-        } else {
-            alert('评审失败：' + data.message);
+// 获取CSRF Token的辅助函数
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
         }
-    })
-    .catch(error => {
-        console.error('评审请求失败:', error);
-        alert('评审请求失败，请查看控制台获取详细信息');
-    });
+    }
+    return cookieValue;
 }
 
+// 等待页面加载完成
 document.addEventListener('DOMContentLoaded', function() {
     // 获取所有评审按钮
     const reviewButtons = document.querySelectorAll('.review-button');
     
+    // 获取 CSRF Token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
     // 为每个评审按钮添加点击事件监听器
     reviewButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); // 阻止默认行为
+            
+            // 获取测试用例ID
             const testCaseId = this.getAttribute('data-id');
-            reviewTestCase(testCaseId);
+            
+            // 验证测试用例ID是否存在
+            if (!testCaseId) {
+                alert('错误：未找到测试用例ID');
+                return;
+            }
+            
+            // 直接打开新窗口，进入详细评审页面
+            window.open(`/case-review-detail/?id=${testCaseId}`, 'TestCaseReview', 
+                'width=800,height=600,scrollbars=yes,resizable=yes');
         });
     });
     
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     test_case_id: testCaseId,
@@ -129,121 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 显示评审结果
-    function displayReviewResult(container, result) {
-        let html = `
-            <div class="card mt-3">
-                <div class="card-header">
-                    评审结果 - 评分: <span class="badge ${getScoreBadgeClass(result.score)}">${result.score}/10</span>
-                    <span class="badge ${result.recommendation === '通过' ? 'badge-success' : 'badge-danger'} float-right">
-                        ${result.recommendation}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <p><strong>总体评价:</strong> ${result.comments}</p>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>优点:</h5>
-                            <ul>
-                                ${result.strengths.map(item => `<li>${item}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>缺点:</h5>
-                            <ul>
-                                ${result.weaknesses.map(item => `<li>${item}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <div class="form-group">
-                            <label for="review-comments-${result.test_case_id}">评审意见:</label>
-                            <textarea id="review-comments-${result.test_case_id}" class="form-control" rows="3"></textarea>
-                        </div>
-                        
-                        <div class="btn-group">
-                            <button class="btn btn-success status-button" data-id="${result.test_case_id}" data-status="approved">
-                                通过
-                            </button>
-                            <button class="btn btn-danger status-button" data-id="${result.test_case_id}" data-status="rejected">
-                                拒绝
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.innerHTML = html;
-        
-        // 重新绑定新添加的按钮事件
-        container.querySelectorAll('.status-button').forEach(button => {
-            button.addEventListener('click', function() {
-                const testCaseId = this.getAttribute('data-id');
-                const status = this.getAttribute('data-status');
-                const commentsElement = document.getElementById(`review-comments-${testCaseId}`);
-                const comments = commentsElement ? commentsElement.value.trim() : '';
-                
-                if (status === 'rejected' && !comments) {
-                    showNotification('拒绝测试用例时必须提供评审意见', 'error');
-                    return;
-                }
-                
-                // 禁用按钮
-                this.disabled = true;
-                
-                // 发送请求到后端
-                fetch('/api/update-status/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        test_case_id: testCaseId,
-                        status: status,
-                        comments: comments
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    this.disabled = false;
-                    
-                    if (data.success) {
-                        showNotification('测试用例状态已更新', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showNotification(data.message || '更新测试用例状态失败', 'error');
-                    }
-                })
-                .catch(error => {
-                    this.disabled = false;
-                    showNotification('请求失败: ' + error.message, 'error');
-                });
-            });
-        });
-    }
-    
-    // 更新标签页计数
-    function updateTabCounts() {
-        const pendingCount = document.querySelectorAll('#pending .test-case-item').length;
-        const approvedCount = document.querySelectorAll('#approved .test-case-item').length;
-        const rejectedCount = document.querySelectorAll('#rejected .test-case-item').length;
-        
-        document.querySelector('#pending-tab .badge').textContent = pendingCount;
-        document.querySelector('#approved-tab .badge').textContent = approvedCount;
-        document.querySelector('#rejected-tab .badge').textContent = rejectedCount;
-    }
-    
-    // 获取评分对应的徽章类
-    function getScoreBadgeClass(score) {
-        if (score >= 8) return 'badge-success';
-        if (score >= 6) return 'badge-warning';
-        return 'badge-danger';
-    }
-    
     // 显示通知
     function showNotification(message, type = 'info') {
         // 如果页面上有通知容器，使用它
@@ -280,19 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
     
-    // 获取CSRF Token的辅助函数
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+    // 更新标签页计数
+    function updateTabCounts() {
+        const pendingCount = document.querySelectorAll('#pending .test-case-item').length;
+        const approvedCount = document.querySelectorAll('#approved .test-case-item').length;
+        const rejectedCount = document.querySelectorAll('#rejected .test-case-item').length;
+        
+        document.querySelector('#pending-tab .badge').textContent = pendingCount;
+        document.querySelector('#approved-tab .badge').textContent = approvedCount;
+        document.querySelector('#rejected-tab .badge').textContent = rejectedCount;
     }
 });
