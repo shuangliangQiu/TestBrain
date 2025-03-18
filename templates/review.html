@@ -70,6 +70,12 @@
                     <table class="table table-bordered table-hover">
                         <thead class="thead-light">
                             <tr>
+                                <th style="width: 40px;">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="select-all">
+                                        <label class="custom-control-label" for="select-all"></label>
+                                    </div>
+                                </th>
                                 <th>状态</th>
                                 <th>用例描述</th>
                                 <th>测试步骤</th>
@@ -80,6 +86,13 @@
                         <tbody>
                             {% for test_case in approved_test_cases %}
                             <tr>
+                                <td>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input case-checkbox" 
+                                               id="case-{{ test_case.id }}" data-id="{{ test_case.id }}">
+                                        <label class="custom-control-label" for="case-{{ test_case.id }}"></label>
+                                    </div>
+                                </td>
                                 <td><span class="badge badge-success">已通过</span></td>
                                 <td>{{ test_case.description }}</td>
                                 <td>{{ test_case.test_steps|safe }}</td>
@@ -94,6 +107,13 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- 只在已通过标签页中添加操作按钮 -->
+                <div class="mt-3">
+                    <button id="copy-selected" class="btn btn-primary mr-2">复制</button>
+                    <button id="export-excel" class="btn btn-success">导出到Excel</button>
+                </div>
+                
                 {% else %}
                     <div class="alert alert-info">没有评审通过的测试用例</div>
                 {% endif %}
@@ -141,8 +161,82 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/review.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 全选功能
+    const selectAllCheckbox = document.getElementById('select-all');
+    const caseCheckboxes = document.querySelectorAll('.case-checkbox');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            caseCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    caseCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (!this.checked && selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            } else if (Array.from(caseCheckboxes).every(cb => cb.checked) && selectAllCheckbox) {
+                selectAllCheckbox.checked = true;
+            }
+        });
+    });
+    
+    // 复制按钮功能
+    document.getElementById('copy-selected').addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
+            .map(checkbox => checkbox.getAttribute('data-id'));
+            
+        if (selectedIds.length === 0) {
+            alert('请先选择要复制的测试用例');
+            return;
+        }
+        
+        // 复制选中的测试用例
+        fetch('/api/copy-test-cases/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ test_case_ids: selectedIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('复制成功！');
+                window.location.reload();
+            } else {
+                alert('复制失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('复制失败:', error);
+            alert('复制失败，请查看控制台获取详细信息');
+        });
+    });
+    
+    // 导出到Excel按钮功能
+    document.getElementById('export-excel').addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
+            .map(checkbox => checkbox.getAttribute('data-id'));
+            
+        if (selectedIds.length === 0) {
+            alert('请先选择要导出的测试用例');
+            return;
+        }
+        
+        // 导出选中的测试用例到Excel
+        window.location.href = '/api/export-test-cases-excel/?ids=' + selectedIds.join(',');
+    });
+});
+</script>
 {% endblock %} 
