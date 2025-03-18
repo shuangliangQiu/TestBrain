@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestBrain - 测试用例详细评审</title>
+    <title>TestBrain - 测试用例AI评审</title>
     <!-- 引入 Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
     <!-- 自定义样式 -->
@@ -24,7 +24,7 @@
     <div class="container">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">测试用例详细评审</h5>
+                <h5 class="mb-0">测试用例AI评审</h5>
             </div>
             <div class="card-body">
                 <form id="caseReviewForm">
@@ -35,6 +35,46 @@
                             <option value="approved">评审通过</option>
                         </select>
                     </div>
+
+                    <!-- 新增的三个下拉框，使用 Bootstrap 的栅格系统进行横向排列 -->
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="bu">BU</label>
+                                <select class="form-control" id="bu" name="bu">
+                                    <option value="">请选择 BU</option>
+                                    <option value="education">教育</option>
+                                    <option value="user_center">用户中心</option>
+                                    <option value="collaboration">协同</option>
+                                    <option value="im">IM</option>
+                                    <option value="workspace">工作台</option>
+                                    <option value="recruitment">招聘</option>
+                                    <option value="work_management">工作管理</option>
+                                    <option value="ai_application">AI 应用</option>
+                                    <option value="operation_platform">运营平台</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="feature">Feature</label>
+                                <select class="form-control" id="feature" name="feature">
+                                    <option value="">请选择 Feature</option>
+                                    <option value="feature1">Feature1</option>
+                                    <option value="feature2">Feature2</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="priority">Priority</label>
+                                <select class="form-control" id="priority" name="priority">
+                                    <option value="">请选择优先级</option>
+                                    <option value="p0">P0</option>
+                                    <option value="p1">P1</option>
+                                    <option value="p2">P2</option>
+                                    <option value="p3">P3</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="description">用例描述</label>
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
@@ -125,6 +165,9 @@
         document.getElementById('saveBtn').onclick = function() {
             saveTestCase();
         };
+
+        // 初始化 Feature 下拉框的自定义添加功能
+        initFeatureSelect();
     });
 
     function startAIReview(testCaseId) {
@@ -159,6 +202,9 @@
         const formData = {
             test_case_id: form.test_case_id.value,
             status: form.status.value,
+            bu: form.bu.value,
+            feature: form.feature.value,
+            priority: form.priority.value,
             description: form.description.value,
             test_steps: form.test_steps.value,
             expected_results: form.expected_results.value
@@ -185,6 +231,39 @@
         .catch(error => {
             console.error('保存失败:', error);
             alert('保存失败，请查看控制台获取详细信息');
+        });
+    }
+
+    // 初始化 Feature 下拉框
+    function initFeatureSelect() {
+        const featureSelect = document.getElementById('feature');
+        
+        // 创建一个新的选项用于添加自定义 Feature
+        const addNewOption = document.createElement('option');
+        addNewOption.value = 'add_new';
+        addNewOption.textContent = '+ 添加新 Feature';
+        featureSelect.appendChild(addNewOption);
+
+        // 监听选择变化
+        featureSelect.addEventListener('change', function() {
+            if (this.value === 'add_new') {
+                const newFeature = prompt('请输入新的 Feature 名称：');
+                if (newFeature && newFeature.trim()) {
+                    // 创建新的选项
+                    const option = document.createElement('option');
+                    option.value = newFeature.toLowerCase().replace(/\s+/g, '_');
+                    option.textContent = newFeature;
+                    
+                    // 插入到倒数第二个位置（在"添加新 Feature"选项之前）
+                    featureSelect.insertBefore(option, addNewOption);
+                    
+                    // 选中新添加的选项
+                    this.value = option.value;
+                } else {
+                    // 如果用户取消或输入为空，恢复到默认选项
+                    this.value = '';
+                }
+            }
         });
     }
     </script>
