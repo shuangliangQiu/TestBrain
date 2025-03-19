@@ -265,16 +265,16 @@ def review_view(request):
 
 # @login_required 先屏蔽登录
 @require_http_methods(["POST"])
-def review_api(request):
+def case_review(request):
     """测试用例评审API接口"""
     try:
         data = json.loads(request.body)
-        test_case_ids = data.get('test_case_ids')
+        test_case_id = data.get('test_case_id')
         
-        logger.info(f"接收到评审请求，测试用例ID: {test_case_ids}")
+        logger.info(f"接收到评审请求，测试用例ID: {test_case_id}")
         
         # 检查test_case_id是否为空
-        if not test_case_ids:
+        if not test_case_id:
             logger.error("测试用例ID为空")
             return JsonResponse({
                 'success': False,
@@ -283,13 +283,13 @@ def review_api(request):
             
         # 检查测试用例是否存在
         try:
-            test_case = TestCase.objects.get(id=test_case_ids[0])
+            test_case = TestCase.objects.get(id=test_case_id)
             logger.info(f"找到测试用例: ID={test_case.id}")
         except TestCase.DoesNotExist:
-            logger.error(f"找不到ID为 {test_case.id} 的测试用例")
+            logger.error(f"找不到ID为 {test_case_id} 的测试用例")
             return JsonResponse({
                 'success': False,
-                'message': f'找不到ID为 {test_case.id} 的测试用例'
+                'message': f'找不到ID为 {test_case_id} 的测试用例'
             }, status=404)
         
         # 调用测试用例评审Agent
@@ -297,10 +297,14 @@ def review_api(request):
         review_result = test_case_reviewer.review(test_case)
         logger.info(f"评审完成，结果: {review_result}")
         
+        # 从AIMessage对象中提取内容
+        review_content = review_result.content if hasattr(review_result, 'content') else str(review_result)
+        
         return JsonResponse({
             'success': True,
-            'review_result': review_result
+            'review_result': review_content  # 只返回评审内容文本
         })
+        
     except json.JSONDecodeError:
         logger.error("JSON解析错误", exc_info=True)
         return JsonResponse({

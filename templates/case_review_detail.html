@@ -88,6 +88,13 @@
                         <label for="expected_results">预期结果</label>
                         <textarea class="form-control" id="expected_results" name="expected_results" rows="5"></textarea>
                     </div>
+
+                    <!-- 新增 AI 评审结果编辑框 -->
+                    <div class="form-group">
+                        <label for="ai_review_result">AI 评审结果</label>
+                        <textarea class="form-control" id="ai_review_result" name="ai_review_result" rows="5" readonly></textarea>
+                    </div>
+
                     <input type="hidden" id="test_case_id" name="test_case_id">
                 </form>
             </div>
@@ -160,7 +167,42 @@
         
         // 绑定按钮事件
         document.getElementById('startReviewBtn').onclick = function() {
-            startAIReview(testCaseId);
+            const testCaseId = document.getElementById('test_case_id').value;
+            
+            // 显示加载状态
+            const aiReviewResult = document.getElementById('ai_review_result');
+            aiReviewResult.value = '评审中...';
+            this.disabled = true;  // 禁用按钮防止重复点击
+            
+            fetch('/api/review/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    test_case_id: testCaseId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 显示评审结果
+                    aiReviewResult.value = data.review_result;
+                    alert('AI评审完成！');
+                } else {
+                    aiReviewResult.value = '评审失败：' + data.message;
+                    alert('评审失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('评审请求失败:', error);
+                aiReviewResult.value = '评审请求失败，请查看控制台获取详细信息';
+                alert('评审请求失败，请查看控制台获取详细信息');
+            })
+            .finally(() => {
+                this.disabled = false;  // 恢复按钮可用状态
+            });
         };
         
         document.getElementById('saveBtn').onclick = function() {
@@ -170,33 +212,6 @@
         // 初始化 Feature 下拉框的自定义添加功能
         initFeatureSelect();
     });
-
-    function startAIReview(testCaseId) {
-        fetch('/api/review/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                test_case_id: testCaseId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('AI评审完成！');
-                window.close();
-                window.opener.location.reload();
-            } else {
-                alert('评审失败：' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('评审请求失败:', error);
-            alert('评审请求失败，请查看控制台获取详细信息');
-        });
-    }
 
     function saveTestCase() {
         const form = document.getElementById('caseReviewForm');
