@@ -26,6 +26,8 @@ from langchain.text_splitter import CharacterTextSplitter
 import hashlib
 import numpy as np
 import gc
+import xlwt
+from django.http import HttpResponse
 
 logger = get_logger(__name__)
 
@@ -644,10 +646,64 @@ def export_test_cases_excel(request):
     """将用例集合导出到excel"""
     try:
         ids = request.GET.get('ids')
-        test_cases = get_test_cases(request, ids)
-        return JsonResponse({
-            'success': True,
-            'test_cases': test_cases
-        })  
+        if not ids:
+            return JsonResponse({'success': False, 'message': '未提供测试用例ID'})
+            
+        # 获取测试用例数据
+        response = get_test_cases(request, ids)
+        response_data = json.loads(response.content)
+        
+        if not response_data.get('success'):
+            return JsonResponse({'success': False, 'message': '获取测试用例数据失败'})
+            
+        test_cases = response_data.get('test_cases')
+        logger.info(f"获取到的测试用例集合数据类型是: {type(test_cases)}")
+        
+        # 创建Excel工作簿和工作表
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('测试用例')
+        
+        # 设置表头样式
+        header_style = xlwt.XFStyle()
+        header_font = xlwt.Font()
+        header_font.bold = True
+        header_style.font = header_font
+        
+        # 写入表头
+        headers = ['序号', '用例描述', '测试步骤', '预期结果', '状态']
+        for col, header in enumerate(headers):
+            ws.write(0, col, header, header_style)
+            # 设置列宽
+            ws.col(col).width = 256 * 30  # 30个字符宽度
+        
+        # 写入数据
+        for row, test_case in enumerate(test_cases, start=1):
+            ws.write(row, 0, row)  # 序号
+            ws.write(row, 1, test_case.get('description', ''))
+            ws.write(row, 2, test_case.get('test_steps', ''))
+            ws.write(row, 3, test_case.get('expected_results', ''))
+            ws.write(row, 4, test_case.get('status', ''))
+            
+            # 自动调整行高
+            ws.row(row).height_mismatch = True
+            ws.row(row).height = 20 * 40  # 40行文本高度
+        
+        # 生成文件名
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')  # 格式：20240319_153021
+        case_count = len(test_cases)
+        filename = f"test_cases_{current_time}_{case_count}_cases.xls"
+        
+        # 生成响应
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # 保存Excel文件到响应
+        wb.save(response)
+        return response
+        
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}) 
+        logger.error(f"导出Excel失败: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'导出Excel失败: {str(e)}'
+        }) 

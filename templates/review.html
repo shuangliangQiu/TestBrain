@@ -191,7 +191,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 复制按钮功能
-    document.getElementById('copy-selected').addEventListener('click', function() {
+    document.getElementById('copy-selected').addEventListener('click', async function() {
+        // 获取选中的测试用例ID
         const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
             .map(checkbox => checkbox.getAttribute('data-id'));
             
@@ -200,42 +201,36 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 复制选中的测试用例
-        fetch('/api/copy-test-cases/?ids=' + selectedIds.join(','), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // 将测试用例数据格式化为文本
-            const textToCopy = data.test_cases.map(testCase => {
-                return `测试用例描述：${testCase.description}\n` +
-                       `测试步骤：${testCase.test_steps}\n` +
-                       `预期结果：${testCase.expected_results}\n` +
-                       `----------------------------------------`;
-            }).join('\n\n');
+        try {
+            // 获取测试用例数据
+            const response = await fetch('/api/copy-test-cases/?ids=' + selectedIds.join(','), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+            });
             
-            // 复制到剪贴板
-            navigator.clipboard.writeText(textToCopy)
-                .then(() => {
-                    alert('测试用例已复制到剪贴板！');
-                })
-                .catch(err => {
-                    console.error('复制到剪贴板失败:', err);
-                    alert('复制到剪贴板失败，请手动复制：\n\n' + textToCopy);
-                });
-            } else {
-                alert('复制失败：' + data.message);
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.message);
             }
-        })
-        .catch(error => {
-            console.error('复制失败:', error);
-            alert('复制失败，请查看控制台获取详细信息');
-        });
+            
+            // 格式化并复制到剪贴板
+            const textToCopy = data.test_cases.map(testCase => (
+                `测试用例描述：${testCase.description}\n` +
+                `测试步骤：${testCase.test_steps}\n` +
+                `预期结果：${testCase.expected_results}\n` +
+                `----------------------------------------`
+            )).join('\n\n');
+            
+            await navigator.clipboard.writeText(textToCopy);
+            alert('测试用例已复制到剪贴板！');
+            
+        } catch (error) {
+            console.error('操作失败:', error);
+            alert('操作失败：' + error.message);
+        }
     });
     
     // 导出到Excel按钮功能
