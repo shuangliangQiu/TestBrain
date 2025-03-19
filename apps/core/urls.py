@@ -14,6 +14,10 @@ urlpatterns = [
 
     
     # API路由
+    path('api/copy-test-cases/', views.copy_test_cases, name='copy_test_cases'), #复制选中的用例集合
+    path('api/export-test-cases-excel/', views.export_test_cases_excel, name='export_test_cases_excel'), #将用例集合导出到excel
+
+
     path('api/test-case/<int:test_case_id>/', views.get_test_case, name='get_test_case'),
     path('api/test-cases/<str:test_case_ids>/', views.get_test_cases, name='get_test_cases'),
     path('api/update-test-case/', views.update_test_case, name='update_test_case'),#更新单个测试用例的状态到mysql

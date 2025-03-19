@@ -587,7 +587,11 @@ def get_test_cases(request, test_case_ids: str):
     try:
         # 将逗号分隔的字符串转换为列表
         ids = test_case_ids.split(',')
-        test_cases = TestCase.objects.filter(id__in=ids)
+        test_cases = TestCase.objects.filter(id__in=ids).values(
+                    'id', 'title', 'description', 'test_steps', 
+                    'expected_results', 'status', 'requirements', 'llm_provider'
+                )
+        logger.info(f"获取到的测试用例集合数据类型是: {type(test_cases)}")
         return JsonResponse({
             'success': True,
             'test_cases': list(test_cases)
@@ -610,5 +614,40 @@ def update_test_case(request):
         return JsonResponse({'success': True})
     except TestCase.DoesNotExist:
         return JsonResponse({'success': False, 'message': '测试用例不存在'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}) 
+
+
+def copy_test_cases(request):
+    """返回用户手动勾选、复制后的测试用例集合"""
+    try:
+        # 将逗号分隔的字符串转换为列表
+        ids = request.GET.get('ids')
+        response = get_test_cases(request,ids)
+        response_data = json.loads(response.content)
+        if response_data.get('success'):
+            test_cases = response_data.get('test_cases')
+            logger.info(f"获取到的测试用例集合数据类型是2222: {type(test_cases)}")
+            return JsonResponse({
+                'success': True,
+                'test_cases': test_cases
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': response_data.get('message')
+            })
+    except TestCase.DoesNotExist:
+        return JsonResponse({'error': '测试用例集合不存在'}, status=404)
+    
+def export_test_cases_excel(request):
+    """将用例集合导出到excel"""
+    try:
+        ids = request.GET.get('ids')
+        test_cases = get_test_cases(request, ids)
+        return JsonResponse({
+            'success': True,
+            'test_cases': test_cases
+        })  
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}) 

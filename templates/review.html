@@ -201,19 +201,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 复制选中的测试用例
-        fetch('/api/copy-test-cases/', {
+        fetch('/api/copy-test-cases/?ids=' + selectedIds.join(','), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
-            body: JSON.stringify({ test_case_ids: selectedIds })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('复制成功！');
-                window.location.reload();
+                // 将测试用例数据格式化为文本
+            const textToCopy = data.test_cases.map(testCase => {
+                return `测试用例描述：${testCase.description}\n` +
+                       `测试步骤：${testCase.test_steps}\n` +
+                       `预期结果：${testCase.expected_results}\n` +
+                       `----------------------------------------`;
+            }).join('\n\n');
+            
+            // 复制到剪贴板
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('测试用例已复制到剪贴板！');
+                })
+                .catch(err => {
+                    console.error('复制到剪贴板失败:', err);
+                    alert('复制到剪贴板失败，请手动复制：\n\n' + textToCopy);
+                });
             } else {
                 alert('复制失败：' + data.message);
             }
