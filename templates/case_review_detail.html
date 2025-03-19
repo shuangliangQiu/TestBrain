@@ -126,9 +126,9 @@
         return cookieValue;
     }
 
-    // 页面加载完成后自动填充数据
+    // 页面加载完成后的初始化
     document.addEventListener('DOMContentLoaded', function() {
-        // 从URL获取测试用例ID
+        // 从URL获取测试用例ID并加载数据
         const urlParams = new URLSearchParams(window.location.search);
         const testCaseId = urlParams.get('id');
         
@@ -143,6 +143,7 @@
             })
             .then(response => response.json())
             .then(data => {
+                // 填充表单数据
                 document.getElementById('test_case_id').value = data.id;
                 document.getElementById('description').value = data.description;
                 document.getElementById('test_steps').value = data.test_steps;
@@ -164,15 +165,16 @@
                 alert('获取测试用例数据失败，请查看控制台获取详细信息');
             });
         }
-        
-        // 绑定按钮事件
+
+        // 开始评审按钮点击事件
         document.getElementById('startReviewBtn').onclick = function() {
             const testCaseId = document.getElementById('test_case_id').value;
+            const aiReviewResult = document.getElementById('ai_review_result');
+            const button = this;
             
             // 显示加载状态
-            const aiReviewResult = document.getElementById('ai_review_result');
             aiReviewResult.value = '评审中...';
-            this.disabled = true;  // 禁用按钮防止重复点击
+            button.disabled = true;  // 禁用按钮防止重复点击
             
             fetch('/api/review/', {
                 method: 'POST',
@@ -187,9 +189,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // 显示评审结果
+                    // 先更新文本框内容
                     aiReviewResult.value = data.review_result;
-                    alert('AI评审完成！');
+                    // 使用 Promise 和 setTimeout 确保 DOM 更新后再显示提示
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            alert('AI评审完成！');
+                            resolve();
+                        }, 0);
+                    });
                 } else {
                     aiReviewResult.value = '评审失败：' + data.message;
                     alert('评审失败：' + data.message);
@@ -201,60 +209,56 @@
                 alert('评审请求失败，请查看控制台获取详细信息');
             })
             .finally(() => {
-                this.disabled = false;  // 恢复按钮可用状态
+                button.disabled = false;  // 恢复按钮可用状态
             });
         };
-        
+
+        // 保存按钮点击事件
         document.getElementById('saveBtn').onclick = function() {
-            saveTestCase();
+            const form = document.getElementById('caseReviewForm');
+            const formData = {
+                test_case_id: form.test_case_id.value,
+                status: form.status.value,
+                bu: form.bu.value,
+                feature: form.feature.value,
+                priority: form.priority.value,
+                description: form.description.value,
+                test_steps: form.test_steps.value,
+                expected_results: form.expected_results.value
+            };
+
+            fetch('/api/update-test-case/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('保存成功！');
+                    window.close();
+                    window.opener.location.reload();
+                } else {
+                    alert('保存失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('保存失败:', error);
+                alert('保存失败，请查看控制台获取详细信息');
+            });
         };
 
-        // 初始化 Feature 下拉框的自定义添加功能
+        // 初始化 Feature 下拉框
         initFeatureSelect();
     });
 
-    function saveTestCase() {
-        const form = document.getElementById('caseReviewForm');
-        const formData = {
-            test_case_id: form.test_case_id.value,
-            status: form.status.value,
-            bu: form.bu.value,
-            feature: form.feature.value,
-            priority: form.priority.value,
-            description: form.description.value,
-            test_steps: form.test_steps.value,
-            expected_results: form.expected_results.value
-        };
-
-        fetch('/api/update-test-case/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('保存成功！');
-                window.close();
-                window.opener.location.reload();
-            } else {
-                alert('保存失败：' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('保存失败:', error);
-            alert('保存失败，请查看控制台获取详细信息');
-        });
-    }
-
-    // 初始化 Feature 下拉框
+    // Feature 下拉框初始化
     function initFeatureSelect() {
         const featureSelect = document.getElementById('feature');
         
-        // 创建一个新的选项用于添加自定义 Feature
         const addNewOption = document.createElement('option');
         addNewOption.value = 'add_new';
         addNewOption.textContent = '+ 添加新 Feature';
