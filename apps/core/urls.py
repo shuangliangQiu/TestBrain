@@ -27,4 +27,5 @@ urlpatterns = [
     path('api/add-knowledge/', views.add_knowledge, name='add_knowledge'),
     path('api/knowledge-list/', views.knowledge_list, name='knowledge_list'),
     path('api/search-knowledge/', views.search_knowledge, name='search_knowledge'),   
+    path('api/delete-test-cases/', views.delete_test_cases, name='delete_test_cases'), #删除选中的测试用例
 ] 

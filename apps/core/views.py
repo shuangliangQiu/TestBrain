@@ -711,3 +711,25 @@ def export_test_cases_excel(request):
             'success': False,
             'message': f'导出Excel失败: {str(e)}'
         }) 
+
+@require_http_methods(["DELETE"])
+def delete_test_cases(request):
+    """删除选中的测试用例"""
+    try:
+        ids = request.GET.get('ids', '')
+        if not ids:
+            return JsonResponse({'success': False, 'message': '未提供测试用例ID'})
+            
+        test_case_ids = ids.split(',')
+        TestCase.objects.filter(id__in=test_case_ids).delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'成功删除 {len(test_case_ids)} 条测试用例'
+        })
+    except Exception as e:
+        logger.error(f"删除测试用例失败: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'删除失败: {str(e)}'
+        }) 
