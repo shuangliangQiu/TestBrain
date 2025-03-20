@@ -170,42 +170,53 @@
 </style>
 
 <script>
-$(document).ready(function() {
-    $('.selectpicker').selectpicker({
-        style: '',
-        styleBase: 'form-control',
-        tickIcon: '',
-        showTick: false,
-        actionsBox: true,
-        deselectAllText: '取消全选',
-        selectAllText: '全选',
-        selectedTextFormat: 'count > 2',
-        countSelectedText: '已选择 {0} 项',
-        noneSelectedText: '请选择'
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    // 确保jQuery已加载
+    if (typeof $ !== 'undefined') {
+        initializeSelectPickers();
+    } else {
+        console.error('jQuery is not loaded. Make sure it is included before this script.');
+    }
+    
+    function initializeSelectPickers() {
+        $('.selectpicker').selectpicker({
+            style: '',
+            styleBase: 'form-control',
+            tickIcon: '',
+            showTick: false,
+            actionsBox: true,
+            deselectAllText: '取消全选',
+            selectAllText: '全选',
+            selectedTextFormat: 'count > 2',
+            countSelectedText: '已选择 {0} 项',
+            noneSelectedText: '请选择'
+        });
 
-    // 自定义下拉选项的渲染
-    $('.selectpicker').on('loaded.bs.select', function () {
-        var $select = $(this);
-        $select.next().find('.dropdown-menu li a').each(function() {
-            var $a = $(this);
-            var isSelected = $a.parent().hasClass('selected');
+        // 自定义下拉选项的渲染
+        $('.selectpicker').on('loaded.bs.select', function () {
+            var $select = $(this);
+            $select.next().find('.dropdown-menu li a').each(function() {
+                var $a = $(this);
+                var isSelected = $a.parent().hasClass('selected');
+                if (isSelected) {
+                    $a.addClass('selected');
+                }
+            });
+        });
+
+        // 处理选择变化
+        $('.selectpicker').on('changed.bs.select', function (e, clickedIndex, isSelected) {
+            var $select = $(this);
+            var $option = $select.next().find('.dropdown-menu li').eq(clickedIndex).find('a');
             if (isSelected) {
-                $a.addClass('selected');
+                $option.addClass('selected');
+            } else {
+                $option.removeClass('selected');
             }
         });
-    });
-
-    // 处理选择变化
-    $('.selectpicker').on('changed.bs.select', function (e, clickedIndex, isSelected) {
-        var $select = $(this);
-        var $option = $select.next().find('.dropdown-menu li').eq(clickedIndex).find('a');
-        if (isSelected) {
-            $option.addClass('selected');
-        } else {
-            $option.removeClass('selected');
-        }
-    });
+    }
 });
 </script>
+<!-- 在这里添加 generate.js 引用 -->
+<script src="{% static 'js/generate.js' %}"></script>
 {% endblock %} 
