@@ -176,4 +176,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('#approved-tab .badge').textContent = approvedCount;
         document.querySelector('#rejected-tab .badge').textContent = rejectedCount;
     }
+
+    // 添加分页链接的点击事件处理
+    document.querySelectorAll('.pagination .page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageType = this.getAttribute('data-page-type');
+            const url = new URL(this.href);
+            const page = url.searchParams.get(`${pageType}_page`);
+            
+            // 保持当前标签页的状态
+            const currentTab = document.querySelector('.nav-tabs .nav-link.active');
+            if (currentTab) {
+                url.searchParams.set('active_tab', currentTab.getAttribute('href').substring(1));
+            }
+            
+            // 跳转到新页面
+            window.location.href = url.toString();
+        });
+    });
 });

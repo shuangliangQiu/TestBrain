@@ -28,6 +28,7 @@ import numpy as np
 import gc
 import xlwt
 from django.http import HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 logger = get_logger(__name__)
 
@@ -251,9 +252,43 @@ def save_test_case(request):
 # @login_required 先屏蔽登录
 def review_view(request):
     """页面-测试用例评审页面视图"""
-    pending_test_cases = TestCase.objects.filter(status='pending')
-    approved_test_cases = TestCase.objects.filter(status='approved')
-    rejected_test_cases = TestCase.objects.filter(status='rejected')
+    # 获取所有测试用例
+    pending_cases = TestCase.objects.filter(status='pending').order_by('-created_at')
+    approved_cases = TestCase.objects.filter(status='approved').order_by('-created_at')
+    rejected_cases = TestCase.objects.filter(status='rejected').order_by('-created_at')
+    
+    # 每页显示15条数据
+    page_size = 15
+    
+    # 处理待评审用例分页
+    pending_paginator = Paginator(pending_cases, page_size)
+    pending_page = request.GET.get('pending_page', 1)
+    try:
+        pending_test_cases = pending_paginator.page(pending_page)
+    except PageNotAnInteger:
+        pending_test_cases = pending_paginator.page(1)
+    except EmptyPage:
+        pending_test_cases = pending_paginator.page(pending_paginator.num_pages)
+    
+    # 处理已通过用例分页
+    approved_paginator = Paginator(approved_cases, page_size)
+    approved_page = request.GET.get('approved_page', 1)
+    try:
+        approved_test_cases = approved_paginator.page(approved_page)
+    except PageNotAnInteger:
+        approved_test_cases = approved_paginator.page(1)
+    except EmptyPage:
+        approved_test_cases = approved_paginator.page(approved_paginator.num_pages)
+    
+    # 处理未通过用例分页
+    rejected_paginator = Paginator(rejected_cases, page_size)
+    rejected_page = request.GET.get('rejected_page', 1)
+    try:
+        rejected_test_cases = rejected_paginator.page(rejected_page)
+    except PageNotAnInteger:
+        rejected_test_cases = rejected_paginator.page(1)
+    except EmptyPage:
+        rejected_test_cases = rejected_paginator.page(rejected_paginator.num_pages)
     
     context = {
         'pending_test_cases': pending_test_cases,
