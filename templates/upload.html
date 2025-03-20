@@ -125,7 +125,7 @@ async function handleSubmit(event) {
         const result = await response.json();
 
         if (result.success) {
-            statusDiv.textContent = `上传成功！成功导入 ${result.count} 条测试用例`;
+            statusDiv.textContent = `上传成功！成功导入 ${result.count} 条向量数据`;
             statusDiv.style.color = '#28a745';
             fileInput.value = '';
             document.getElementById('selected-file').style.display = 'none';
