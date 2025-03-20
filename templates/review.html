@@ -14,16 +14,19 @@
             <li class="nav-item">
                 <a class="nav-link active" id="pending-tab" data-toggle="tab" href="#pending" role="tab">
                     待评审
+                    <div class="total-count">共 {{ pending_test_cases.paginator.count }} 条</div>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab">
                     已通过
+                    <div class="total-count">共 {{ approved_test_cases.paginator.count }} 条</div>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="rejected-tab" data-toggle="tab" href="#rejected" role="tab">
                     未通过
+                    <div class="total-count">共 {{ rejected_test_cases.paginator.count }} 条</div>
                 </a>
             </li>
         </ul>
@@ -59,26 +62,14 @@
                     </table>
                 </div>
                 
-                <!-- 添加分页组件 -->
-                <nav aria-label="待评审分页" class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        {% if pending_test_cases.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?pending_page={{ pending_test_cases.previous_page_number }}" data-page-type="pending">上一页</a>
-                        </li>
-                        {% endif %}
-                        
-                        <li class="page-item disabled">
-                            <span class="page-link">{{ pending_test_cases.number }} / {{ pending_test_cases.paginator.num_pages }}</span>
-                        </li>
-                        
-                        {% if pending_test_cases.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?pending_page={{ pending_test_cases.next_page_number }}" data-page-type="pending">下一页</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                <!-- 添加分页和总条数显示 -->
+                <div class="pagination-info">
+                    <span class="total-records">共 {{ pending_test_cases.paginator.count }} 条</span>
+                    <span class="page-numbers">{{ pending_test_cases.number }} / {{ pending_test_cases.paginator.num_pages }}</span>
+                    {% if pending_test_cases.has_next %}
+                    <a href="?pending_page={{ pending_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="pending">下一页</a>
+                    {% endif %}
+                </div>
                 {% else %}
                     <div class="alert alert-info">没有待评审的测试用例</div>
                 {% endif %}
@@ -135,26 +126,14 @@
                     <button id="export-excel" class="btn btn-success">导出到Excel</button>
                 </div>
                 
-                <!-- 添加分页组件 -->
-                <nav aria-label="已通过分页" class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        {% if approved_test_cases.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?approved_page={{ approved_test_cases.previous_page_number }}" data-page-type="approved">上一页</a>
-                        </li>
-                        {% endif %}
-                        
-                        <li class="page-item disabled">
-                            <span class="page-link">{{ approved_test_cases.number }} / {{ approved_test_cases.paginator.num_pages }}</span>
-                        </li>
-                        
-                        {% if approved_test_cases.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?approved_page={{ approved_test_cases.next_page_number }}" data-page-type="approved">下一页</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                <!-- 添加分页和总条数显示 -->
+                <div class="pagination-info">
+                    <span class="total-records">共 {{ approved_test_cases.paginator.count }} 条</span>
+                    <span class="page-numbers">{{ approved_test_cases.number }} / {{ approved_test_cases.paginator.num_pages }}</span>
+                    {% if approved_test_cases.has_next %}
+                    <a href="?approved_page={{ approved_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="approved">下一页</a>
+                    {% endif %}
+                </div>
                 
                 {% else %}
                     <div class="alert alert-info">没有评审通过的测试用例</div>
@@ -215,26 +194,14 @@
                     <button id="delete-selected" class="btn btn-danger">删除选中项</button>
                 </div>
                 
-                <!-- 添加分页组件 -->
-                <nav aria-label="未通过分页" class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        {% if rejected_test_cases.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?rejected_page={{ rejected_test_cases.previous_page_number }}" data-page-type="rejected">上一页</a>
-                        </li>
-                        {% endif %}
-                        
-                        <li class="page-item disabled">
-                            <span class="page-link">{{ rejected_test_cases.number }} / {{ rejected_test_cases.paginator.num_pages }}</span>
-                        </li>
-                        
-                        {% if rejected_test_cases.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?rejected_page={{ rejected_test_cases.next_page_number }}" data-page-type="rejected">下一页</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                <!-- 添加分页和总条数显示 -->
+                <div class="pagination-info">
+                    <span class="total-records">共 {{ rejected_test_cases.paginator.count }} 条</span>
+                    <span class="page-numbers">{{ rejected_test_cases.number }} / {{ rejected_test_cases.paginator.num_pages }}</span>
+                    {% if rejected_test_cases.has_next %}
+                    <a href="?rejected_page={{ rejected_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="rejected">下一页</a>
+                    {% endif %}
+                </div>
                 
                 {% else %}
                     <div class="alert alert-info">没有评审未通过的测试用例</div>
@@ -323,6 +290,63 @@
     .nav-item {
         margin-bottom: 0;
         margin-right: -1px;
+    }
+    
+    /* 添加总条数显示样式 */
+    .nav-tabs .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 25px 8px;
+    }
+    
+    .total-count {
+        font-size: 12px;
+        margin-top: 4px;
+        opacity: 0.8;
+        font-weight: normal;
+    }
+    
+    /* 修改活动和悬停状态下的总条数颜色 */
+    .nav-tabs .nav-link.active .total-count,
+    .nav-tabs .nav-link:hover .total-count {
+        color: #fff;
+    }
+    
+    /* 非活动状态下的总条数颜色 */
+    .nav-tabs .nav-link .total-count {
+        color: #6c757d;
+    }
+    
+    /* 分页信息容器样式 */
+    .pagination-info {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 10px 0;
+        border-top: 1px solid #dee2e6;
+        margin-top: 15px;
+    }
+    
+    /* 总条数样式 */
+    .total-records {
+        color: #666;
+        margin-right: 15px;
+    }
+    
+    /* 页码样式 */
+    .page-numbers {
+        color: #666;
+        margin-right: 15px;
+        padding: 5px 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    /* 下一页按钮样式 */
+    .next-page {
+        padding: 4px 12px;
+        font-size: 14px;
     }
 </style>
 
