@@ -62,13 +62,18 @@
                     </table>
                 </div>
                 
-                <!-- 添加分页和总条数显示 -->
+                <!-- 待评审测试用例的分页 -->
                 <div class="pagination-info">
                     <span class="total-records">共 {{ pending_test_cases.paginator.count }} 条</span>
-                    <span class="page-numbers">{{ pending_test_cases.number }} / {{ pending_test_cases.paginator.num_pages }}</span>
-                    {% if pending_test_cases.has_next %}
-                    <a href="?pending_page={{ pending_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="pending">下一页</a>
-                    {% endif %}
+                    <div class="pagination-buttons">
+                        {% if pending_test_cases.has_previous %}
+                        <a href="?pending_page={{ pending_test_cases.previous_page_number }}" class="btn btn-primary btn-sm prev-page" data-page-type="pending">上一页</a>
+                        {% endif %}
+                        <span class="page-numbers">{{ pending_test_cases.number }} / {{ pending_test_cases.paginator.num_pages }}</span>
+                        {% if pending_test_cases.has_next %}
+                        <a href="?pending_page={{ pending_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="pending">下一页</a>
+                        {% endif %}
+                    </div>
                 </div>
                 {% else %}
                     <div class="alert alert-info">没有待评审的测试用例</div>
@@ -126,13 +131,18 @@
                     <button id="export-excel" class="btn btn-success">导出到Excel</button>
                 </div>
                 
-                <!-- 添加分页和总条数显示 -->
+                <!-- 已通过测试用例的分页 -->
                 <div class="pagination-info">
                     <span class="total-records">共 {{ approved_test_cases.paginator.count }} 条</span>
-                    <span class="page-numbers">{{ approved_test_cases.number }} / {{ approved_test_cases.paginator.num_pages }}</span>
-                    {% if approved_test_cases.has_next %}
-                    <a href="?approved_page={{ approved_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="approved">下一页</a>
-                    {% endif %}
+                    <div class="pagination-buttons">
+                        {% if approved_test_cases.has_previous %}
+                        <a href="?approved_page={{ approved_test_cases.previous_page_number }}" class="btn btn-primary btn-sm prev-page" data-page-type="approved">上一页</a>
+                        {% endif %}
+                        <span class="page-numbers">{{ approved_test_cases.number }} / {{ approved_test_cases.paginator.num_pages }}</span>
+                        {% if approved_test_cases.has_next %}
+                        <a href="?approved_page={{ approved_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="approved">下一页</a>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 {% else %}
@@ -194,13 +204,18 @@
                     <button id="delete-selected" class="btn btn-danger">删除选中项</button>
                 </div>
                 
-                <!-- 添加分页和总条数显示 -->
+                <!-- 未通过测试用例的分页 -->
                 <div class="pagination-info">
                     <span class="total-records">共 {{ rejected_test_cases.paginator.count }} 条</span>
-                    <span class="page-numbers">{{ rejected_test_cases.number }} / {{ rejected_test_cases.paginator.num_pages }}</span>
-                    {% if rejected_test_cases.has_next %}
-                    <a href="?rejected_page={{ rejected_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="rejected">下一页</a>
-                    {% endif %}
+                    <div class="pagination-buttons">
+                        {% if rejected_test_cases.has_previous %}
+                        <a href="?rejected_page={{ rejected_test_cases.previous_page_number }}" class="btn btn-primary btn-sm prev-page" data-page-type="rejected">上一页</a>
+                        {% endif %}
+                        <span class="page-numbers">{{ rejected_test_cases.number }} / {{ rejected_test_cases.paginator.num_pages }}</span>
+                        {% if rejected_test_cases.has_next %}
+                        <a href="?rejected_page={{ rejected_test_cases.next_page_number }}" class="btn btn-primary btn-sm next-page" data-page-type="rejected">下一页</a>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 {% else %}
@@ -334,16 +349,23 @@
         margin-right: 15px;
     }
     
+    /* 分页按钮容器 */
+    .pagination-buttons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
     /* 页码样式 */
     .page-numbers {
         color: #666;
-        margin-right: 15px;
         padding: 5px 10px;
         background: #f8f9fa;
         border-radius: 4px;
     }
     
-    /* 下一页按钮样式 */
+    /* 上一页和下一页按钮样式 */
+    .prev-page,
     .next-page {
         padding: 4px 12px;
         font-size: 14px;
