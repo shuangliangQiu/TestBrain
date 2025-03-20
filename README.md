@@ -87,12 +87,11 @@ http://127.0.0.1:8000/
 
 
 6.AI测试用例生成(TODO:目前prompt效果还可以但仍有优化空间, 未来可能会支持prompt配置文件化, 这样方便个人定制)
-<video src="/videos/测试用例生成.mp4" controls width="640">
-  您的浏览器不支持视频播放。
-</video>
+--/videos/测试用例生成.mp4
+ 
 
 7.AI测试用例评审(TODO:优化prompt)
-[点击观看视频](https://www.iqiyi.com/v_ti3k5yci4k.html)
+--/videos/测试用例评审.mp4
 
 8.知识库文件上传
-[点击观看视频]（https://www.iqiyi.com/v_1k8f5hmkdlc.html）
+--/videos/知识库文档上传.mp4
