@@ -24,19 +24,15 @@ class TestCaseReviewerAgent:
     def review(self, test_case: TestCase) -> Dict[str, Any]:
         """评审测试用例"""
         try:
+            self.logger.info(f"待评审的测试用例数据类型为: {type(test_case)}")
+            self.logger.info(f"待评审的测试用例数据为: {test_case}")
             # 构造提示词
-            formatted_prompt = self._format_prompt(test_case)
+            # formatted_prompt = self._format_prompt(test_case)
             
             # 创建消息列表
             messages = [
-                SystemMessage(content=(
-                    "你是一个专业的测试用例评审专家，请根据以下几个方面评审测试用例：\n"
-                    "1. 测试步骤是否清晰、完整\n"
-                    "2. 预期结果是否明确、可验证\n"
-                    "3. 是否覆盖了主要测试场景\n"
-                    "4. 是否存在改进建议"
-                )),
-                HumanMessage(content=formatted_prompt)
+                SystemMessage(content=self.prompt.system_template),
+                HumanMessage(content=self.prompt.human_template.format(test_case=test_case))
             ]
             
             # 记录消息内容
@@ -65,16 +61,13 @@ class TestCaseReviewerAgent:
         """格式化提示词"""
         try:
             prompt = f"""请评审以下测试用例：
-
-测试用例描述：
-{test_case.description}
-
-测试步骤：
-{test_case.test_steps}
-
-预期结果：
-{test_case.expected_results}
-"""
+            测试用例描述：
+            {test_case.description}
+            测试步骤：
+            {test_case.test_steps}
+            预期结果：
+            {test_case.expected_results}
+            """
             return prompt.strip()
             
         except Exception as e:

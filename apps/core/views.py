@@ -308,7 +308,7 @@ def case_review(request):
         data = json.loads(request.body)
         test_case_id = data.get('test_case_id')
         
-        logger.info(f"接收到评审请求，测试用例ID: {test_case_id}")
+        logger.info(f"接收到评审请求,测试用例ID: {test_case_id}")
         
         # 检查test_case_id是否为空
         if not test_case_id:

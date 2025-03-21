@@ -58,7 +58,11 @@ class TestCase(models.Model):
     priority = models.CharField(max_length=2, choices=PRIORITY_CHOICES, blank=True, verbose_name='Priority')
     
     def __str__(self):
-        return self.title
+        return (
+            f"用例描述：\n{self.description}\n\n"
+            f"测试步骤：\n{self.test_steps}\n\n"
+            f"预期结果：\n{self.expected_results}\n"
+        )
     
     class Meta:
         verbose_name = "测试用例"

@@ -45,20 +45,7 @@ test_case_reviewer:
   human_template: |
     请对以下测试用例进行全面评审。
 
-    测试用例信息:
-    标题: {title}
-    描述: {description}
-    测试步骤: 
-    {test_steps}
-
-    预期结果: 
-    {expected_results}
-
-    {requirements_section}
-    {code_section}
-
-    相关知识库内容:
-    {knowledge_context}
+    {test_case}
 
     请对测试用例进行全面评审，包括以下方面：
     1. 测试用例是否完整、清晰
@@ -70,7 +57,7 @@ test_case_reviewer:
 
     请以JSON格式返回评审结果,格式如下:
     ```json
-    {
+    {{
       "score": 评分(1-10),
       "strengths": ["优点1", "优点2", ...],
       "weaknesses": ["缺点1", "缺点2", ...],
@@ -78,5 +65,5 @@ test_case_reviewer:
       "missing_scenarios": ["缺失场景1", "缺失场景2", ...],
       "recommendation": "通过/不通过",
       "comments": "总体评价"
-    }
+    }}
     ``` 
