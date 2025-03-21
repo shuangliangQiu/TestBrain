@@ -401,61 +401,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 复制按钮功能
-    document.getElementById('copy-selected').addEventListener('click', async function() {
-        // 获取选中的测试用例ID
-        const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
-            .map(checkbox => checkbox.getAttribute('data-id'));
-            
-        if (selectedIds.length === 0) {
-            alert('请先选择要复制的测试用例');
-            return;
-        }
-        
-        try {
-            // 获取测试用例数据
-            const response = await fetch('/api/copy-test-cases/?ids=' + selectedIds.join(','), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-            });
-            
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.message);
+    const copyButton = document.getElementById('copy-selected');
+    if (copyButton) {
+        copyButton.addEventListener('click', async function() {
+            // 获取选中的测试用例ID
+            const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+                
+            if (selectedIds.length === 0) {
+                alert('请先选择要复制的测试用例');
+                return;
             }
             
-            // 格式化并复制到剪贴板
-            const textToCopy = data.test_cases.map(testCase => (
-                `测试用例描述：${testCase.description}\n` +
-                `测试步骤：${testCase.test_steps}\n` +
-                `预期结果：${testCase.expected_results}\n` +
-                `----------------------------------------`
-            )).join('\n\n');
-            
-            await navigator.clipboard.writeText(textToCopy);
-            alert('测试用例已复制到剪贴板！');
-            
-        } catch (error) {
-            console.error('操作失败:', error);
-            alert('操作失败：' + error.message);
-        }
-    });
+            try {
+                // 获取测试用例数据
+                const response = await fetch('/api/copy-test-cases/?ids=' + selectedIds.join(','), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                });
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message);
+                }
+                
+                // 格式化并复制到剪贴板
+                const textToCopy = data.test_cases.map(testCase => (
+                    `测试用例描述：${testCase.description}\n` +
+                    `测试步骤：${testCase.test_steps}\n` +
+                    `预期结果：${testCase.expected_results}\n` +
+                    `----------------------------------------`
+                )).join('\n\n');
+                
+                await navigator.clipboard.writeText(textToCopy);
+                alert('测试用例已复制到剪贴板！');
+                
+            } catch (error) {
+                console.error('操作失败:', error);
+                alert('操作失败：' + error.message);
+            }
+        });
+    }
     
     // 导出到Excel按钮功能
-    document.getElementById('export-excel').addEventListener('click', function() {
-        const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
-            .map(checkbox => checkbox.getAttribute('data-id'));
+    const exportButton = document.getElementById('export-excel');
+    if (exportButton) {
+        exportButton.addEventListener('click', function() {
+            const selectedIds = Array.from(document.querySelectorAll('.case-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+                
+            if (selectedIds.length === 0) {
+                alert('请先选择要导出的测试用例');
+                return;
+            }
             
-        if (selectedIds.length === 0) {
-            alert('请先选择要导出的测试用例');
-            return;
-        }
-        
-        // 导出选中的测试用例到Excel
-        window.location.href = '/api/export-test-cases-excel/?ids=' + selectedIds.join(',');
-    });
+            // 导出选中的测试用例到Excel
+            window.location.href = '/api/export-test-cases-excel/?ids=' + selectedIds.join(',');
+        });
+    }
     
     // 未通过标签页的全选功能
     const selectAllRejected = document.getElementById('select-all-rejected');
@@ -480,38 +486,41 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 删除按钮功能
-    document.getElementById('delete-selected').addEventListener('click', async function() {
-        const selectedIds = Array.from(document.querySelectorAll('.rejected-case-checkbox:checked'))
-            .map(checkbox => checkbox.getAttribute('data-id'));
-            
-        if (selectedIds.length === 0) {
-            alert('请先选择要删除的测试用例');
-            return;
-        }
-        
-        if (!confirm('确定要删除选中的测试用例吗？此操作不可恢复。')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('/api/delete-test-cases/?ids=' + selectedIds.join(','), {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            if (data.success) {
-                alert('删除成功！');
-            } else {
-                throw new Error(data.message);
+    const deleteButton = document.getElementById('delete-selected');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.rejected-case-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+                
+            if (selectedIds.length === 0) {
+                alert('请先选择要删除的测试用例');
+                return;
             }
-        } catch (error) {
-            console.error('删除失败:', error);
-            alert('删除失败：' + error.message);
-        }
-    });
+            
+            if (!confirm('确定要删除选中的测试用例吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/delete-test-cases/?ids=' + selectedIds.join(','), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('删除成功！');
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error('删除失败:', error);
+                alert('删除失败：' + error.message);
+            }
+        });
+    }
 });
 </script>
 {% endblock %} 
