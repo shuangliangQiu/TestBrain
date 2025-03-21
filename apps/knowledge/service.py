@@ -85,11 +85,10 @@ class KnowledgeService:
         
         # 如果没有结果，返回提示信息
         if not content_list:
-            return "未找到相关知识。"
+            return ""
         
         # 组装成字符串
         combined_content = "\n\n".join(content_list)
-        # self.logger.info(f"combined_content: {combined_content[:200]}...")  # 只记录前200个字符
         
         return combined_content
 

@@ -9,15 +9,17 @@ from utils.logger_manager import get_logger
 class TestCaseGeneratorAgent:
     """测试用例生成Agent"""
     
-    def __init__(self, llm_service: BaseLLMService, knowledge_service: KnowledgeService):
+    def __init__(self, llm_service: BaseLLMService, knowledge_service: KnowledgeService, case_design_methods: List[str], case_categories: List[str]):
         self.llm_service = llm_service
+        self.case_design_methods = case_design_methods
+        self.case_categories = case_categories
         self.knowledge_service = knowledge_service
         self.prompt = TestCaseGeneratorPrompt()
         self.logger = get_logger(self.__class__.__name__)  # 添加logger
     
     def generate(self, input_text: str, input_type: str = "requirement") -> List[Dict[str, Any]]:
         """生成测试用例"""
-        self.logger.info(f"开始生成测试用例，进入生成测试用例的TestCaseGeneratorAgent")
+        self.logger.info(f"开始生成测试用例,进入生成测试用例的TestCaseGeneratorAgent")
         # 确定输入类型描述
         input_type_desc = "需求描述" if input_type == "requirement" else "代码片段"
         
@@ -29,11 +31,13 @@ class TestCaseGeneratorAgent:
         messages = [
             SystemMessage(content=self.prompt.system_template),
             HumanMessage(content=self.prompt.human_template.format(
-                input_type=input_type_desc,
-                input_text=input_text,
+                requirements=input_text,
+                case_design_methods=",".join(self.case_design_methods),
+                case_categories=",".join(self.case_categories),
                 knowledge_context=knowledge_context
             ))
         ]
+        self.logger.info(f"构建后大模型提示词+用户需求消息: \n{'='*50}\n{messages}\n{'='*50}")
         
         # 调用LLM服务
         try:

@@ -85,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 获取选中的值
-            const selectedDesignMethods = Array.from(designMethodsSelect.selectedOptions || []).map(option => option.value);
-            const selectedCaseCategories = Array.from(caseCategoriesSelect.selectedOptions || []).map(option => option.value);
+            const selectedDesignMethods = Array.from(designMethodsSelect.selectedOptions || []).map(option => option.textContent);
+            const selectedCaseCategories = Array.from(caseCategoriesSelect.selectedOptions || []).map(option => option.textContent);
             
             if (!inputTextValue) {
                 showNotification('请输入需求描述', 'error');
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 构造请求数据
             const requestData = {
-                requirement: inputTextValue,
+                requirements: inputTextValue,
                 llm_provider: document.getElementById('llm-provider')?.value || 'deepseek',
                 case_design_methods: selectedDesignMethods,
                 case_categories: selectedCaseCategories

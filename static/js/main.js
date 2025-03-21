@@ -186,7 +186,7 @@ function initGeneratePage() {
                 },
                 body: JSON.stringify({
                     test_cases: testCases,
-                    requirements: inputType === 'requirement' ? inputText : '',
+                    requirements: inputType === 'requirements' ? inputText : '',
                     code_snippet: inputType === 'code' ? inputText : ''
                 })
             })
