@@ -511,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = await response.json();
                 if (data.success) {
+                    window.location.reload();  // 刷新当前页面
                     alert('删除成功！');
                 } else {
                     throw new Error(data.message);
