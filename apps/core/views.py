@@ -101,64 +101,67 @@ def generate(request):
         'test_cases': None  # 初始化为 None
     }
     
-    if request.method == 'POST':
-        try:
-            # 解析 JSON 数据
-            data = json.loads(request.body)
-            requirement = data.get('requirement', '')
-            llm_provider = data.get('llm_provider', DEFAULT_PROVIDER)
-            case_design_methods = data.get('case_design_methods', [])  # 获取测试方法
-            case_categories = data.get('case_categories', [])         # 获取测试类型
-            
-            logger.info(f"接收到的数据: {json.dumps(data, ensure_ascii=False)}")
-            
-            if requirement:
-                # 使用工厂创建选定的LLM服务
-                logger.info(f"使用 {llm_provider} 生成测试用例")
-                llm_service = LLMServiceFactory.create(llm_provider, **PROVIDERS.get(llm_provider, {}))
-                
-                # 创建知识服务和测试用例生成Agent
-                # knowledge_service = KnowledgeService()
-                generator_agent = TestCaseGeneratorAgent(llm_service, knowledge_service)
-                logger.info(f"开始生成测试用例 - 需求: {requirement}...")
-                logger.info(f"测试方法: {case_design_methods}")
-                logger.info(f"用例类型: {case_categories}")
-                
-                # 生成测试用例
-                #mock数据
-                test_cases = [{'description': '测试系统对用户输入为纯文本时的处理', 'test_steps': ['1. 打开应用程序', "2. 在输入框中输入纯文本，例如：'肥肥的'", '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', "2. 输入框正确显示输入的文本：'肥肥的'", '3. 系统正确识别并处理为纯文本输入，不进行代码段处理']}, {'description': '测试系统对用户输入为代码段时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中输入代码段，例如：\'print("Hello, World!")\'', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框正确显示输入的代码段：\'print("Hello, World!")\'', '3. 系统正确识别并处理为代码段输入，进行相应的代码处理']}, {'description': '测试系统对用户输入为空时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中不输入任何内容', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框保持为空', '3. 系统提示输入不能为空，要求重新输入']}, {'description': '测试系统对用户输入为混合内容（文本和代码）时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中输入混合内容，例如：\'肥肥的 print("Hello, World!")\'', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框正确显示输入的混合内容：\'肥肥的 print("Hello, World!")\'', '3. 系统正确识别并处理为混合内容，分别对文本和代码段进行相应处理']}, {'description': '测试系统对用户输入为特殊字符时的处理', 'test_steps': ['1. 打开应用程序', "2. 在输入框中输入特殊字符，例如：'@#$%^&*()'", '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', "2. 输入框正确显示输入的特殊字符：'@#$%^&*()'", '3. 系统正确识别并处理为特殊字符输入，不进行代码段处理']}]
-                # test_cases = generator_agent.generate(requirement, input_type="requirement")
-                logger.info(f"测试用例生成成功 - 生成数量: {len(test_cases)}")
-                context.update({
-                    'test_cases': test_cases
-                })
-                logger.info(f"返回前端的context:{context}")
-                # 返回 JSON 响应
-                return JsonResponse({
-                'success': True,
-                'test_cases': test_cases
-                })  
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'message': '需求描述不能为空'
-                })
-                
-        except json.JSONDecodeError:
-            logger.error("JSON解析错误", exc_info=True)
-            return JsonResponse({
-                'success': False,
-                'message': '无效的JSON数据'
-            }, status=400)
-        except Exception as e:
-            logger.error(f"生成测试用例时出错: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'success': False,
-                'message': str(e)
-            }, status=500)
+    if request.method == 'GET':
+        return render(request, 'generate.html', context)
     
-    # GET 请求返回页面
-    return render(request, 'generate.html', context)
+    # POST 请求参数解析
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        logger.error("JSON解析错误", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': '无效的JSON数据'
+        }, status=400)
+    
+    # 参数获取和验证
+    requirement = data.get('requirement', '')
+    if not requirement:
+        return JsonResponse({
+            'success': False,
+            'message': '需求描述不能为空'
+        })
+        
+    llm_provider = data.get('llm_provider', DEFAULT_PROVIDER)
+    case_design_methods = data.get('case_design_methods', [])  # 获取测试方法
+    case_categories = data.get('case_categories', [])         # 获取测试类型
+    
+    logger.info(f"接收到的数据: {json.dumps(data, ensure_ascii=False)}")
+    
+    try:
+        # 使用工厂创建选定的LLM服务
+        logger.info(f"使用 {llm_provider} 生成测试用例")
+        llm_service = LLMServiceFactory.create(llm_provider, **PROVIDERS.get(llm_provider, {}))
+        
+        # 创建知识服务和测试用例生成Agent
+        # knowledge_service = KnowledgeService()
+        generator_agent = TestCaseGeneratorAgent(llm_service, knowledge_service)
+        logger.info(f"开始生成测试用例 - 需求: {requirement}...")
+        logger.info(f"选择的测试用例设计方法: {case_design_methods}")
+        logger.info(f"选择的测试用例类型: {case_categories}")
+        
+        # 生成测试用例
+        #mock数据
+        test_cases = [{'description': '测试系统对用户输入为纯文本时的处理', 'test_steps': ['1. 打开应用程序', "2. 在输入框中输入纯文本，例如：'肥肥的'", '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', "2. 输入框正确显示输入的文本：'肥肥的'", '3. 系统正确识别并处理为纯文本输入，不进行代码段处理']}, {'description': '测试系统对用户输入为代码段时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中输入代码段，例如：\'print("Hello, World!")\'', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框正确显示输入的代码段：\'print("Hello, World!")\'', '3. 系统正确识别并处理为代码段输入，进行相应的代码处理']}, {'description': '测试系统对用户输入为空时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中不输入任何内容', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框保持为空', '3. 系统提示输入不能为空，要求重新输入']}, {'description': '测试系统对用户输入为混合内容（文本和代码）时的处理', 'test_steps': ['1. 打开应用程序', '2. 在输入框中输入混合内容，例如：\'肥肥的 print("Hello, World!")\'', '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', '2. 输入框正确显示输入的混合内容：\'肥肥的 print("Hello, World!")\'', '3. 系统正确识别并处理为混合内容，分别对文本和代码段进行相应处理']}, {'description': '测试系统对用户输入为特殊字符时的处理', 'test_steps': ['1. 打开应用程序', "2. 在输入框中输入特殊字符，例如：'@#$%^&*()'", '3. 提交输入'], 'expected_results': ['1. 应用程序成功启动', "2. 输入框正确显示输入的特殊字符：'@#$%^&*()'", '3. 系统正确识别并处理为特殊字符输入，不进行代码段处理']}]
+        # test_cases = generator_agent.generate(requirement, input_type="requirement")
+        logger.info(f"测试用例生成成功 - 生成数量: {len(test_cases)}")
+        
+        context.update({
+            'test_cases': test_cases
+        })
+        logger.info(f"返回前端的context:{context}")
+        
+        return JsonResponse({
+            'success': True,
+            'test_cases': test_cases
+        })
+            
+    except Exception as e:
+        logger.error(f"生成测试用例时出错: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
 
 def format_test_cases_to_html(test_cases):
     """将测试用例格式化为HTML"""
