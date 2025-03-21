@@ -192,34 +192,7 @@ def format_test_cases_to_html(test_cases):
     
     return html
 
-#TODO: 确定无用后删除
-# @login_required 先屏蔽登录
-# @require_http_methods(["POST"])
-# def generate_api(request):
-#     """测试用例生成API"""
-#     try:
-#         data = json.loads(request.body)
-#         input_type = data.get('input_type')
-#         input_text = data.get('input')
-        
-#         if not input_text:
-#             return JsonResponse({
-#                 'success': False,
-#                 'message': '输入内容不能为空'
-#             })
-        
-#         # 调用测试用例生成Agent
-#         test_cases = test_case_generator.generate(input_text, input_type)
-        
-#         return JsonResponse({
-#             'success': True,
-#             'test_cases': test_cases
-#         })
-#     except Exception as e:
-#         return JsonResponse({
-#             'success': False,
-#             'message': str(e)
-#         })
+
 
 # @login_required 先屏蔽登录
 @require_http_methods(["POST"])
