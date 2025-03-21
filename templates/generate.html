@@ -9,7 +9,7 @@
         测试用例生成
     </div>
     <div class="card-body">
-        <form method="post" action="{% url 'generate' %}">
+        <form id="generate-form" method="post">
             {% csrf_token %}
             
             <div class="form-group mb-3">
@@ -30,8 +30,8 @@
             
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label for="test-methods">测试用例设计方法:</label>
-                    <select class="form-control selectpicker" id="test-methods" name="test_methods[]" multiple data-live-search="true">
+                    <label for="case_design_method">测试用例设计方法:</label>
+                    <select class="form-control selectpicker" id="case_design_methods" name="case_design_methods" multiple data-live-search="true">
                         <option value="equivalence_partitioning">等价类划分法</option>
                         <option value="boundary_value">边界值分析法</option>
                         <option value="decision_table">判定表法</option>
@@ -41,8 +41,8 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label for="test-types">用例类型:</label>
-                    <select class="form-control selectpicker" id="test-types" name="test_types[]" multiple data-live-search="true">
+                    <label for="case_categories">用例类型:</label>
+                    <select class="form-control selectpicker" id="case_categories" name="case_categories" multiple data-live-search="true">
                         <option value="functional">功能测试</option>
                         <option value="performance">性能测试</option>
                         <option value="compatibility">兼容性测试</option>

@@ -55,7 +55,7 @@ class KnowledgeService:
         # 在向量数据库中搜索，获取更多结果以便后续过滤
         search_k = top_k * 3  # 获取更多结果用于后续过滤
         results = self.vector_store.search(query_embedding, top_k=search_k)
-        self.logger.info(f"知识库搜索原始结果: {results}")
+        # self.logger.info(f"知识库搜索原始结果: {results}")
         
         # 1. 相似度阈值过滤：过滤掉相似度低于阈值的结果
         threshold_filtered = [item for item in results if item["score"] >= min_score_threshold]

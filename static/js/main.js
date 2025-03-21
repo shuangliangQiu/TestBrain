@@ -93,7 +93,7 @@ function initGeneratePage() {
     const saveButton = document.getElementById('save-button');
     const resultContainer = document.getElementById('result-container');
     const loadingIndicator = document.getElementById('loading-indicator');
-    
+    //TODO: 貌似跟generate.js重复
     if (generateForm) {
         generateForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -171,7 +171,7 @@ function initGeneratePage() {
         });
     }
     
-    // 保存测试用例
+    // 保存测试用例，貌似跟generate.js重复
     if (saveButton) {
         saveButton.addEventListener('click', function() {
             const testCases = collectTestCasesFromUI();

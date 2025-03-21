@@ -21,7 +21,8 @@ urlpatterns = [
     path('api/test-case/<int:test_case_id>/', views.get_test_case, name='get_test_case'),
     path('api/test-cases/<str:test_case_ids>/', views.get_test_cases, name='get_test_cases'),
     path('api/update-test-case/', views.update_test_case, name='update_test_case'),#更新单个测试用例的状态到mysql
-    path('api/generate/', views.generate_api, name='generate_api'),
+    #TODO: 确定无用后删除
+    # path('api/generate/', views.generate_api, name='generate_api'),
     path('core/save-test-case/', views.save_test_case, name='save_test_case'),#批量保存大模型生成的测试用例
     path('api/review/', views.case_review, name='case_review'),#调用大模型对单个测试用例进行AI评审
     path('api/add-knowledge/', views.add_knowledge, name='add_knowledge'),
