@@ -49,7 +49,6 @@ class KnowledgeService:
         self.logger.info(
             f"知识库查询context: '{query}'\n"
             f"向量维度: {len(query_embedding)}\n"
-            f"前5个维度: {query_embedding[:5]}"
         )
         
         # 在向量数据库中搜索，获取更多结果以便后续过滤

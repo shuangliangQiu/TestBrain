@@ -9,8 +9,8 @@ class LoggingCallbackHandler(BaseCallbackHandler):
     
     def on_llm_start(self, serialized, prompts, **kwargs):
         """LLM开始生成时的回调"""
-        prompt_preview = prompts[0][:100] + "..." if len(prompts[0]) > 100 else prompts[0]
-        self.logger.info(f"开始LLM调用: {prompt_preview}")
+        # prompt_preview = prompts[0][:100] + "..." if len(prompts[0]) > 100 else prompts[0]
+        self.logger.info(f"开始LLM调用...")
     
     def on_llm_end(self, response, **kwargs):
         """LLM生成完成时的回调"""

@@ -202,7 +202,7 @@ def save_test_case(request):
         test_cases_list = data.get('test_cases', [])
         llm_provider = data.get('llm_provider')
         
-        logger.info(f"接收到的保存请求数据: {json.dumps(data, ensure_ascii=False, indent=2)}")
+        # logger.info(f"接收到的保存请求数据: {json.dumps(data, ensure_ascii=False, indent=2)}")
         
         if not test_cases_list:
             return JsonResponse({

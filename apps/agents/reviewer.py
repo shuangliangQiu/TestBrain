@@ -24,8 +24,7 @@ class TestCaseReviewerAgent:
     def review(self, test_case: TestCase) -> Dict[str, Any]:
         """评审测试用例"""
         try:
-            self.logger.info(f"待评审的测试用例数据类型为: {type(test_case)}")
-            self.logger.info(f"待评审的测试用例数据为: {test_case}")
+            self.logger.info(f"待评审的测试用例数据为: \n{test_case}")
             # 构造提示词
             # formatted_prompt = self._format_prompt(test_case)
             
@@ -36,20 +35,14 @@ class TestCaseReviewerAgent:
             ]
             
             # 记录消息内容
-            self.logger.info("评审消息详细信息:")
-            for msg in messages:
-                self.logger.info(f"消息类型: {type(msg).__name__}")
-                self.logger.info(f"消息内容:\n{msg.content}")
-                self.logger.info("="*50)
+            # self.logger.info("评审消息详细信息:")
+            # for msg in messages:
+            #     self.logger.info(f"消息类型: {type(msg).__name__}")
+            #     self.logger.info(f"消息内容:\n{msg.content}")
+            #     self.logger.info("="*50)
             
             # 调用LLM服务
             result = self.llm_service.invoke(messages)  # 使用 invoke 方法替代 chat
-            
-            # 记录LLM返回结果
-            self.logger.info(f"LLM评审结果:\n"
-                       f"{'='*50}\n"
-                       f"{result}\n"
-                       f"{'='*50}")
             
             return result
             
