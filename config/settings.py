@@ -131,7 +131,8 @@ LLM_PROVIDERS = {
     'default_provider': 'deepseek',
     'deepseek': {
         'name': 'DeepSeek',
-        'model': 'deepseek-chat',
+        # 'model': 'deepseek-chat', #可以切换
+        'model': 'deepseek-reasoner',
         'api_base': 'https://api.deepseek.com/v1',
         'temperature': 0.7,
         'max_tokens': 2000,
