@@ -131,7 +131,7 @@ LLM_PROVIDERS = {
     'default_provider': 'deepseek',
     'deepseek': {
         'name': 'DeepSeek',
-        # 'model': 'deepseek-chat', #可以切换
+        # 'model': 'deepseek-chat', #可以切换, deepseek-reasoner即【深度思考】模式, 可能会稍微慢一些
         'model': 'deepseek-reasoner',
         'api_base': 'https://api.deepseek.com/v1',
         'temperature': 0.7,
