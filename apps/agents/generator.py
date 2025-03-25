@@ -54,8 +54,8 @@ class TestCaseGeneratorAgent:
                 json_str = result
                 
             test_cases = json.loads(json_str)
-            self._validate_test_cases(test_cases)
-            return test_cases
+            valid_test_cases = self._validate_test_cases(test_cases)
+            return valid_test_cases
             
         except Exception as e:
             raise ValueError(f"无法解析生成的测试用例: {str(e)}\n原始响应: {result}")
@@ -72,23 +72,37 @@ class TestCaseGeneratorAgent:
             self.logger.warning(f"获取知识上下文失败: {str(e)}")
         return ""
     
-    def _validate_test_cases(self, test_cases: List[Dict[str, Any]]):
-        """验证测试用例格式"""
+    def _validate_test_cases(self, test_cases: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """验证测试用例格式，返回合法的测试用例列表
+        
+        Args:
+            test_cases: 原始测试用例列表
+            
+        Returns:
+            合法的测试用例列表
+            
+        Logs:
+            记录被过滤掉的测试用例信息
+        """
+        valid_test_cases = []
+        required_fields = {"description", "test_steps", "expected_results"}
+        
         for i, test_case in enumerate(test_cases):
-            # 检查必要字段
-            if "description" not in test_case:
-                raise ValueError(f"测试用例 #{i+1} 缺少描述字段")
+            # 检查必要字段是否存在且非空
+            if all(field in test_case and test_case[field] for field in required_fields):
+                valid_test_cases.append(test_case)
+            else:
+                missing_fields = [field for field in required_fields 
+                                if field not in test_case or not test_case[field]]
+                self.logger.warning(
+                    f"测试用例 #{i+1} 因缺少必要字段而被过滤: {', '.join(missing_fields)}"
+                )
+        
+        if not valid_test_cases:
+            raise ValueError("没有找到任何合法的测试用例")
             
-            if "test_steps" not in test_case:
-                raise ValueError(f"测试用例 #{i+1} 缺少测试步骤字段")
-            
-            if "expected_results" not in test_case:
-                raise ValueError(f"测试用例 #{i+1} 缺少预期结果字段")
-            
-            # 检查测试步骤和预期结果的数量是否一致, 测试步骤、预期结果的数量不一定严格相等, 暂时屏蔽掉这项校验
-            # if len(test_case["test_steps"]) != len(test_case["expected_results"]):
-            #     raise ValueError(
-            #         f"测试用例 #{i+1} 的测试步骤数量 ({len(test_case['test_steps'])}) "
-            #         f"与预期结果数量 ({len(test_case['expected_results'])}) 不一致"
-            #     )
+        self.logger.info(f"共验证 {len(test_cases)} 个测试用例，"
+                        f"其中 {len(valid_test_cases)} 个合法")
+        
+        return valid_test_cases
             
