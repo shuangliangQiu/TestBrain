@@ -32,6 +32,7 @@ test_case_generator:
     你应该{capabilities[2]}，包括：{test_types}。
     如果用户选择特定的测试用例类型，你必须根据用户指定的测试用例类型生成全面的测试用例。
     你必须按照指定的格式返回测试用例，包括测试用例描述、测试步骤和预期结果。
+    除非用户明确要求，否则你应该尽可能多的生成测试用例。
   
   human_template: |
     请你{knowledge_context}，根据{case_design_methods}, 为{requirements}生成{case_categories}的全面测试用例。
