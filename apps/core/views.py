@@ -504,7 +504,7 @@ def upload_single_file(request):
                 # 2. 保存临时文件
                 save_dir = 'uploads/'
                 os.makedirs(save_dir, exist_ok=True)
-                file_path = os.path.join(save_dir, f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}{uploaded_file.name}")
+                file_path = os.path.join(save_dir, f"{uploaded_file.name}")
                 with open(file_path, 'wb+') as f:
                     for chunk in uploaded_file.chunks():
                         f.write(chunk)
@@ -594,7 +594,8 @@ def upload_single_file(request):
             finally:
                 # 清理临时文件
                 if os.path.exists(file_path):
-                    os.remove(file_path)
+                    pass
+                    # os.remove(file_path)
         else:
             return JsonResponse({
                 'success': False,
