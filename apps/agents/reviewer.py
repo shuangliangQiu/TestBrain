@@ -25,21 +25,17 @@ class TestCaseReviewerAgent:
         """评审测试用例"""
         try:
             self.logger.info(f"待评审的测试用例数据为: \n{test_case}")
-            # 构造提示词
-            # formatted_prompt = self._format_prompt(test_case)
+             # 构造测试用例数据字典
+            test_case_dict = {
+                "description": test_case.description,
+                "test_steps": test_case.test_steps,
+                "expected_results": test_case.expected_results
+            }
             
-            # 创建消息列表
-            messages = [
-                SystemMessage(content=self.prompt.system_template),
-                HumanMessage(content=self.prompt.human_template.format(test_case=test_case))
-            ]
+            # 使用新的 format_messages 方法获取消息列表
+            messages = self.prompt.format_messages(test_case_dict)
             
-            # 记录消息内容
-            # self.logger.info("评审消息详细信息:")
-            # for msg in messages:
-            #     self.logger.info(f"消息类型: {type(msg).__name__}")
-            #     self.logger.info(f"消息内容:\n{msg.content}")
-            #     self.logger.info("="*50)
+            self.logger.info(f"构建后的评审提示词: \n{'='*50}\n{messages}\n{'='*50}")
             
             # 调用LLM服务
             result = self.llm_service.invoke(messages)  # 使用 invoke 方法替代 chat

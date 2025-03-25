@@ -27,16 +27,17 @@ class TestCaseGeneratorAgent:
         knowledge_context = self._get_knowledge_context(input_text)
         self.logger.info(f"获取到知识库上下文: \n{'='*50}\n{knowledge_context}\n{'='*50}")
         
-        # 构建消息
-        messages = [
-            SystemMessage(content=self.prompt.system_template),
-            HumanMessage(content=self.prompt.human_template.format(
-                requirements=input_text,
-                case_design_methods=",".join(self.case_design_methods),
-                case_categories=",".join(self.case_categories),
-                knowledge_context=knowledge_context
-            ))
-        ]
+        # 处理设计方法和测试类型
+        case_design_methods = ",".join(self.case_design_methods) if self.case_design_methods else ""
+        case_categories = ",".join(self.case_categories) if self.case_categories else ""
+        
+        # 使用新的 format_messages 方法获取消息列表
+        messages = self.prompt.format_messages(
+            requirements=input_text,
+            case_design_methods=case_design_methods,
+            case_categories=case_categories,
+            knowledge_context=knowledge_context
+        )
         self.logger.info(f"构建后大模型提示词+用户需求消息: \n{'='*50}\n{messages}\n{'='*50}")
         
         # 调用LLM服务
@@ -84,10 +85,10 @@ class TestCaseGeneratorAgent:
             if "expected_results" not in test_case:
                 raise ValueError(f"测试用例 #{i+1} 缺少预期结果字段")
             
-            # 检查测试步骤和预期结果的数量是否一致
-            if len(test_case["test_steps"]) != len(test_case["expected_results"]):
-                raise ValueError(
-                    f"测试用例 #{i+1} 的测试步骤数量 ({len(test_case['test_steps'])}) "
-                    f"与预期结果数量 ({len(test_case['expected_results'])}) 不一致"
-                )
+            # 检查测试步骤和预期结果的数量是否一致, 测试步骤、预期结果的数量不一定严格相等, 暂时屏蔽掉这项校验
+            # if len(test_case["test_steps"]) != len(test_case["expected_results"]):
+            #     raise ValueError(
+            #         f"测试用例 #{i+1} 的测试步骤数量 ({len(test_case['test_steps'])}) "
+            #         f"与预期结果数量 ({len(test_case['expected_results'])}) 不一致"
+            #     )
             

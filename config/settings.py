@@ -27,6 +27,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
+    '172.16.32.88'
 ]
 
 # 是否启用Milvus
@@ -131,24 +132,24 @@ LLM_PROVIDERS = {
     'default_provider': 'deepseek',
     'deepseek': {
         'name': 'DeepSeek',
-        # 'model': 'deepseek-chat', #可以切换, deepseek-reasoner即【深度思考】模式, 可能会稍微慢一些
-        'model': 'deepseek-reasoner',
+        'model': 'deepseek-chat', #可以切换, deepseek-reasoner即【深度思考】模式, 可能会稍微慢一些
+        # 'model': 'deepseek-reasoner',
         'api_base': 'https://api.deepseek.com/v1',
-        'temperature': 0.7,
-        'max_tokens': 2000,
+        'temperature': 1.0,
+        'max_tokens': 8000,
     },
     'qwen': {
         'name': '通义千问',
         'model': 'qwen-max',
         'api_base': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-        'temperature': 0.7,
-        'max_tokens': 2000,
+        'temperature': 1.0,
+        'max_tokens': 200000,
     },
     'openai': {
         'name': 'OpenAI',
         'model': 'gpt-3.5-turbo',
         'temperature': 0.7,
-        'max_tokens': 2000,
+        'max_tokens': 200000,
     }
 }
 
