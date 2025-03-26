@@ -132,15 +132,15 @@
         {% block content %}{% endblock %}
     </main>
 
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{% static 'js/extra/jquery.min.js' %}"></script>
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script> -->
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script> -->
      <!-- 修改为使用本地文件 -->
     <script src="{% static 'js/extra/all.min.js' %}"></script>
-    <script src="{% static 'js/extra/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/extra/bootstrap.bundle.min.js' %}" data-no-maps></script>
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap-select/1.13.14/js/bootstrap-select.min.js"></script> -->
-    <script src="{% static 'js/extra/bootstrap-select.min.js' %}"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+    <script src="{% static 'js/extra/bootstrap-select.min.js' %}" data-no-maps></script>
+    <script src="{% static 'js/extra/select2.min.js' %}" data-no-maps></script>
     <script>
         $(document).ready(function() {
             $('.selectpicker').selectpicker({

@@ -51,8 +51,8 @@
                             <tr>
                                 <td><span class="badge badge-warning">待评审</span></td>
                                 <td>{{ test_case.description }}</td>
-                                <td>{{ test_case.test_steps|safe }}</td>
-                                <td>{{ test_case.expected_results|safe }}</td>
+                                <td>{{ test_case.test_steps }}</td>
+                                <td>{{ test_case.expected_results }}</td>
                                 <td>
                                     <button class="btn btn-primary btn-sm review-button" data-id="{{ test_case.id }}">AI评审</button>
                                 </td>
@@ -112,8 +112,8 @@
                                 </td>
                                 <td><span class="badge badge-success">已通过</span></td>
                                 <td>{{ test_case.description }}</td>
-                                <td>{{ test_case.test_steps|safe }}</td>
-                                <td>{{ test_case.expected_results|safe }}</td>
+                                <td>{{ test_case.test_steps }}</td>
+                                <td>{{ test_case.expected_results }}</td>
                                 <td>
                                     {% if test_case.reviews.exists %}
                                         {{ test_case.reviews.last.review_comments }}
@@ -183,8 +183,8 @@
                                 </td>
                                 <td><span class="badge badge-danger">未通过</span></td>
                                 <td>{{ test_case.description }}</td>
-                                <td>{{ test_case.test_steps|safe }}</td>
-                                <td>{{ test_case.expected_results|safe }}</td>
+                                <td>{{ test_case.test_steps }}</td>
+                                <td>{{ test_case.expected_results }}</td>
                                 <td>
                                     {% if test_case.reviews.exists %}
                                         {{ test_case.reviews.last.review_comments }}
