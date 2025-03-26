@@ -436,9 +436,54 @@ document.addEventListener('DOMContentLoaded', function() {
                     `----------------------------------------`
                 )).join('\n\n');
                 
-                await navigator.clipboard.writeText(textToCopy);
-                alert('测试用例已复制到剪贴板！');
-                
+                // 添加检查确保clipboard API可用
+                if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(textToCopy)
+                        .then(() => {
+                            console.log('测试用例已复制到剪贴板');
+                            alert('测试用例已复制到剪贴板！');
+                        })
+                        .catch(err => {
+                            console.error('复制失败:', err);
+                            // 备用复制方案
+                            const textarea = document.createElement('textarea');
+                            textarea.value = textToCopy;
+                            textarea.style.position = 'fixed';  // 避免滚动到底部
+                            document.body.appendChild(textarea);
+                            textarea.focus();
+                            textarea.select();
+                            
+                            try {
+                                const successful = document.execCommand('copy');
+                                console.log(successful ? '复制成功' : '复制失败');
+                                alert('测试用例已复制到剪贴板！');
+                            } catch (err) {
+                                console.error('复制失败:', err);
+                                alert('复制失败：' + err.message);
+                            }
+                            
+                            document.body.removeChild(textarea);
+                        });
+                } else {
+                    // 备用复制方案
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    textarea.style.position = 'fixed';  // 避免滚动到底部
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    
+                    try {
+                        const successful = document.execCommand('copy');
+                        console.log(successful ? '复制成功' : '复制失败');
+                        alert('测试用例已复制到剪贴板！');
+                    } catch (err) {
+                        console.error('复制失败:', err);
+                        alert('复制失败：' + err.message);
+                    }
+                    
+                    document.body.removeChild(textarea);
+                }
             } catch (error) {
                 console.error('操作失败:', error);
                 alert('操作失败：' + error.message);
