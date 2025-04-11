@@ -8,6 +8,7 @@ from .models import TestCase, TestCaseReview, KnowledgeBase
 from .forms import TestCaseForm, TestCaseReviewForm, KnowledgeBaseForm
 from ..agents.generator import TestCaseGeneratorAgent
 from ..agents.reviewer import TestCaseReviewerAgent
+from ..agents.analyser import PrdAnalyserAgent
 from ..knowledge.service import KnowledgeService
 
 # 初始化服务
@@ -29,6 +30,7 @@ import gc
 import xlwt
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from utils.file_transfer import word_to_markdown
 
 logger = get_logger(__name__)
 
@@ -772,3 +774,60 @@ def delete_test_cases(request):
             'success': False,
             'message': f'删除失败: {str(e)}'
         }) 
+    
+def prd_analyser(request):
+    """从PRD文件中提取测试点&测试场景"""
+    if request.method == 'GET':
+        return render(request, 'analyser.html')
+    elif request.method == 'POST':
+        if 'single_file' in request.FILES:  # 修改这里匹配前端的 name 属性
+            uploaded_file = request.FILES['single_file']  # 修改这里匹配前端的 name 属性
+            file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)
+            # 先检查文件是否存在
+            if os.path.exists(file_path):
+                return JsonResponse({
+                    'success': False,
+                    'error': '文件已存在'
+                })
+            logger.info(f"Uploaded file: {uploaded_file}")
+            if not uploaded_file:
+                return JsonResponse({'success': False, 'error': '未接收到文件'})
+            file_type = os.path.splitext(uploaded_file.name)[1]
+            # 判断文件类型目前只支持docx，其他类型不支持
+            if file_type != '.docx':
+                return JsonResponse({'success': False, 'error': '不支持的文件类型'})
+            logger.info(f"上传文件类型: {file_type}")
+            logger.info(f"上传文件名: {uploaded_file.name}")
+             # 2. 保存临时文件
+            save_dir = 'prd/'
+            os.makedirs(save_dir, exist_ok=True)
+            file_path = os.path.join(save_dir, f"{uploaded_file.name}")
+            with open(file_path, 'wb+') as f:
+                for chunk in uploaded_file.chunks():
+                    f.write(chunk)
+            logger.info(f"临时文件保存成功, 文件保存路径: {file_path}")
+            #3. 处理文件
+            word_to_markdown(file_path, file_path.replace('.docx', '.md'))
+            #读取出转化后md文件的内容
+            with open(file_path.replace('.docx', '.md'), 'r', encoding='utf-8') as f:
+                prd_content = f.read()
+            logger.info(f"PRD内容: {prd_content}")
+            #调用PRD分析器
+            analyser = PrdAnalyserAgent(llm_service=llm_service)
+            result = analyser.analyse(prd_content)
+            return JsonResponse({
+                'success': True,
+                'result': result
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '未接收到文件'
+            })
+    return JsonResponse({
+        'success': False,
+        'error': '不支持的请求方法'
+    })
+
+
+    

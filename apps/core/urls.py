@@ -11,7 +11,8 @@ urlpatterns = [
     
     #知识库文件上传页面
     path('upload/', views.upload_single_file, name='upload_single_file'),
-
+    #PRD分析页面
+    path('analyser/', views.prd_analyser, name='prd_analyser'),
     
     # API路由
     path('api/copy-test-cases/', views.copy_test_cases, name='copy_test_cases'), #复制选中的用例集合

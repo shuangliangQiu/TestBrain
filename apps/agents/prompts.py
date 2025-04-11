@@ -71,6 +71,33 @@ class PromptTemplateManager:
             system_message_prompt,
             human_message_prompt
         ])
+        
+    def get_prd_analyser_prompt(self) -> ChatPromptTemplate:
+        """获取PRD分析的提示词模板"""
+        config = self.config['prd_analyser']
+        
+        # 准备系统消息的变量并格式化模板
+        system_vars = {
+            'role': config['role'],
+            'capabilities': config['capabilities'],
+            'analysis_focus': ', '.join(config['analysis_focus'])
+        }
+        
+        # 创建系统消息模板
+        system_message_prompt = SystemMessagePromptTemplate.from_template(
+            config['system_template'].format(**system_vars)  # 直接格式化模板
+        )
+        
+        # 创建人类消息模板
+        human_message_prompt = HumanMessagePromptTemplate.from_template(
+            config['human_template']
+        )
+        
+        # 组合成聊天提示词模板
+        return ChatPromptTemplate.from_messages([
+            system_message_prompt,
+            human_message_prompt
+        ])
 
 class TestCaseGeneratorPrompt:
     """测试用例生成提示词"""
@@ -147,24 +174,61 @@ class TestCaseReviewerPrompt:
             review_points=review_points
         )
 
+class PrdAnalyserPrompt:
+    """PRD分析提示词"""
+    
+    def __init__(self):
+        self.prompt_manager = PromptTemplateManager()
+        self.prompt_template = self.prompt_manager.get_prd_analyser_prompt()
+    
+    def format_messages(self, markdown_content: str) -> list:
+        """格式化消息
+        
+        Args:
+            markdown_content: Markdown格式的PRD文档内容
+            
+        Returns:
+            格式化后的消息列表
+        """
+        return self.prompt_template.format_messages(
+            markdown_content=markdown_content
+        )
+
+
 # 使用示例
 if __name__ == "__main__":
     # 测试用例生成
-    generator = TestCaseGeneratorPrompt()
-    messages = generator.format_messages(
-        requirements="实现用户登录功能",
-        case_design_methods="等价类划分法",
-        case_categories="功能测试",
-        knowledge_context="用户登录需要验证用户名和密码"
-    )
-    print("Generator Messages:", messages)
+    # generator = TestCaseGeneratorPrompt()
+    # messages = generator.format_messages(
+    #     requirements="实现用户登录功能",
+    #     case_design_methods="等价类划分法",
+    #     case_categories="功能测试",
+    #     knowledge_context="用户登录需要验证用户名和密码"
+    # )
+    # print("Generator Messages:", messages)
     
-    # 测试用例评审
-    reviewer = TestCaseReviewerPrompt()
-    test_case = {
-        "description": "测试用户登录功能",
-        "test_steps": ["1. 输入用户名", "2. 输入密码", "3. 点击登录按钮"],
-        "expected_results": ["1. 显示输入框", "2. 密码显示为星号", "3. 登录成功"]
-    }
-    messages = reviewer.format_messages(test_case)
-    print("\nReviewer Messages:", messages)
+    # # 测试用例评审
+    # reviewer = TestCaseReviewerPrompt()
+    # test_case = {
+    #     "description": "测试用户登录功能",
+    #     "test_steps": ["1. 输入用户名", "2. 输入密码", "3. 点击登录按钮"],
+    #     "expected_results": ["1. 显示输入框", "2. 密码显示为星号", "3. 登录成功"]
+    # }
+    # messages = reviewer.format_messages(test_case)
+    # print("\nReviewer Messages:", messages)
+    
+    # PRD分析
+    analyser = PrdAnalyserPrompt()
+    prd_content = """
+    # 用户登录功能
+    
+    ## 功能描述
+    允许用户通过用户名和密码登录系统。
+    
+    ## 详细需求
+    1. 用户需要输入用户名和密码
+    2. 系统验证用户名和密码的正确性
+    3. 登录成功后跳转到首页
+    """
+    messages = analyser.format_messages(prd_content)
+    print("\nPRD Analyser Messages:", messages)
