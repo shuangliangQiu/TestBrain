@@ -127,6 +127,7 @@ def generate(request):
     llm_provider = data.get('llm_provider', DEFAULT_PROVIDER)
     case_design_methods = data.get('case_design_methods', [])  # 获取测试方法
     case_categories = data.get('case_categories', [])         # 获取测试类型
+    case_count = int(data.get('case_count', 10))            # 获取生成用例条数
     
     logger.info(f"接收到的数据: {json.dumps(data, ensure_ascii=False)}")
     
@@ -136,10 +137,11 @@ def generate(request):
         llm_service = LLMServiceFactory.create(llm_provider, **PROVIDERS.get(llm_provider, {}))
         
         
-        generator_agent = TestCaseGeneratorAgent(llm_service=llm_service, knowledge_service=knowledge_service, case_design_methods=case_design_methods, case_categories=case_categories)
+        generator_agent = TestCaseGeneratorAgent(llm_service=llm_service, knowledge_service=knowledge_service, case_design_methods=case_design_methods, case_categories=case_categories, case_count=case_count)
         logger.info(f"开始生成测试用例 - 需求: {requirements}...")
         logger.info(f"选择的测试用例设计方法: {case_design_methods}")
         logger.info(f"选择的测试用例类型: {case_categories}")
+        logger.info(f"需要生成的用例条数: {case_count}")
         
         # 生成测试用例
         #mock数据

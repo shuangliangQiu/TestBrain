@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 requirements: inputTextValue,
                 llm_provider: document.getElementById('llm-provider')?.value || 'deepseek',
                 case_design_methods: selectedDesignMethods,
-                case_categories: selectedCaseCategories
+                case_categories: selectedCaseCategories,
+                case_count: document.getElementById('case_count')?.value || '10'
             };
             
             console.log('发送的数据:', requestData);

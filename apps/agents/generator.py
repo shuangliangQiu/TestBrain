@@ -5,14 +5,15 @@ from ..llm.base import BaseLLMService
 from ..knowledge.service import KnowledgeService
 from .prompts import TestCaseGeneratorPrompt
 from utils.logger_manager import get_logger
-
+import re
 class TestCaseGeneratorAgent:
     """测试用例生成Agent"""
     
-    def __init__(self, llm_service: BaseLLMService, knowledge_service: KnowledgeService, case_design_methods: List[str], case_categories: List[str]):
+    def __init__(self, llm_service: BaseLLMService, knowledge_service: KnowledgeService, case_design_methods: List[str], case_categories: List[str], case_count: int = 10):
         self.llm_service = llm_service
         self.case_design_methods = case_design_methods
         self.case_categories = case_categories
+        self.case_count = case_count
         self.knowledge_service = knowledge_service
         self.prompt = TestCaseGeneratorPrompt()
         self.logger = get_logger(self.__class__.__name__)  # 添加logger
@@ -36,6 +37,7 @@ class TestCaseGeneratorAgent:
             requirements=input_text,
             case_design_methods=case_design_methods,
             case_categories=case_categories,
+            case_count=self.case_count,
             knowledge_context=knowledge_context
         )
         self.logger.info(f"构建后大模型提示词+用户需求消息: \n{'='*50}\n{messages}\n{'='*50}")
@@ -44,16 +46,17 @@ class TestCaseGeneratorAgent:
         try:
             response = self.llm_service.invoke(messages)
             result = response.content
+            self.logger.info(f"LLM原始响应: \n{'='*50}\n{result}\n{'='*50}")
             
-            # 解析JSON结果
-            if "```json" in result:
-                json_str = result.split("```json")[1].split("```")[0].strip()
-            elif "```" in result:
-                json_str = result.split("```")[1].split("```")[0].strip()
-            else:
-                json_str = result
+            # 尝试提取JSON部分
+            json_str = self._extract_json_from_response(result)
+            if not json_str:
+                raise ValueError("无法从响应中提取有效的JSON数据")
                 
+            # 尝试解析JSON
             test_cases = json.loads(json_str)
+            self.logger.info(f"_validate_test_cases处理前的用例个数: {len(test_cases)}")
+            
             valid_test_cases = self._validate_test_cases(test_cases)
             return valid_test_cases
             
@@ -73,36 +76,95 @@ class TestCaseGeneratorAgent:
         return ""
     
     def _validate_test_cases(self, test_cases: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """验证测试用例格式，返回合法的测试用例列表
+        """验证并修复测试用例格式
         
         Args:
             test_cases: 原始测试用例列表
             
         Returns:
-            合法的测试用例列表
-            
-        Logs:
-            记录被过滤掉的测试用例信息
-        """
+            验证并修复后的测试用例列表
+        """  
         valid_test_cases = []
         required_fields = {"description", "test_steps", "expected_results"}
         
         for i, test_case in enumerate(test_cases):
-            # 检查必要字段是否存在且非空
-            if all(field in test_case and test_case[field] for field in required_fields):
+            try:
+                # 如果不是字典格式，跳过这个测试用例
+                if not isinstance(test_case, dict):
+                    self.logger.warning(f"测试用例 #{i+1} 不是字典格式，已跳过")
+                    continue
+                
+                # 检查必要字段是否存在
+                missing_fields = required_fields - set(test_case.keys())
+                if missing_fields:
+                    self.logger.warning(f"测试用例 #{i+1} 缺少必要字段: {missing_fields}，已跳过")
+                    continue
+                
+                # 验证并修复字段格式
+                # 1. description必须是字符串
+                if not isinstance(test_case['description'], str):
+                    self.logger.warning(f"测试用例 #{i+1} 的description不是字符串格式，已跳过")
+                    continue
+                
+                # 2. test_steps必须是列表
+                if not isinstance(test_case['test_steps'], list):
+                    self.logger.warning(f"测试用例 #{i+1} 的test_steps格式无法修复，已跳过")
+                    continue
+                
+                # 3. expected_results必须是列表
+                if not isinstance(test_case['expected_results'], list):
+                    self.logger.warning(f"测试用例 #{i+1} 的expected_results格式无法修复，已跳过")
+                    continue
+                
+                # 确保所有字段都不为空
+                if not test_case['description'].strip():
+                    self.logger.warning(f"测试用例 #{i+1} 的description为空，已跳过")
+                    continue
+                
+                if not test_case['test_steps']:
+                    self.logger.warning(f"测试用例 #{i+1} 的test_steps为空，已跳过")
+                    continue
+                
+                if not test_case['expected_results']:
+                    self.logger.warning(f"测试用例 #{i+1} 的expected_results为空，已跳过")
+                    continue
+                # 通过所有验证，添加到有效列表
                 valid_test_cases.append(test_case)
-            else:
-                missing_fields = [field for field in required_fields 
-                                if field not in test_case or not test_case[field]]
-                self.logger.warning(
-                    f"测试用例 #{i+1} 因缺少必要字段而被过滤: {', '.join(missing_fields)}"
-                )
+                
+            except Exception as e:
+                self.logger.warning(f"处理测试用例 #{i+1} 时出错: {str(e)}，已跳过")
+                continue
         
         if not valid_test_cases:
             raise ValueError("没有找到任何合法的测试用例")
-            
-        self.logger.info(f"共验证 {len(test_cases)} 个测试用例，"
+        
+        self.logger.info(f"共处理 {len(test_cases)} 个测试用例，"
                         f"其中 {len(valid_test_cases)} 个合法")
         
         return valid_test_cases
+            
+    def _extract_json_from_response(self, response: str) -> str:
+        """从响应中提取JSON部分并进行基础修复
+        
+        Args:
+            response: 原始响应字符串
+            
+        Returns:
+            修复后的JSON字符串
+        """
+        # 使用正则表达式提取JSON字符串
+        result = ""
+        right_format_pattern = r'^\[([\s\S]*)\]$'
+        match = re.search(right_format_pattern, response)
+        if match:
+            result = match.group(0)  # 使用group(0)返回完整匹配，包含方括号
+        else:
+            #从字符串中找到最后一个出现},的位置，然后取},前面的内容,并补全]和json结束标记```
+            last_comma_index = response.rfind('},')
+            if last_comma_index != -1:
+                result = response[:last_comma_index+1] + ']'
+        # self.logger.info(f"_extract_json_from_response函数处理结果: \n{'='*50}\n{result}\n{'='*50}")    
+        return result
+        
+
             

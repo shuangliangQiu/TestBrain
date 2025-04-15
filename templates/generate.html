@@ -29,7 +29,7 @@
             </div>
             
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="case_design_method">测试用例设计方法:</label>
                     <select class="form-control selectpicker" id="case_design_methods" name="case_design_methods" multiple data-live-search="true">
                         <option value="equivalence_partitioning">等价类划分法</option>
@@ -40,13 +40,28 @@
                         <option value="scenario">场景法</option>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="case_categories">用例类型:</label>
                     <select class="form-control selectpicker" id="case_categories" name="case_categories" multiple data-live-search="true">
                         <option value="functional">功能测试</option>
                         <option value="performance">性能测试</option>
                         <option value="compatibility">兼容性测试</option>
                         <option value="security">安全性测试</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="case_count">生成用例条数:</label>
+                    <select class="form-control" id="case_count" name="case_count">
+                        <option value="10">10条</option>
+                        <option value="20">20条</option>
+                        <option value="30">30条</option>
+                        <option value="40">40条</option>
+                        <option value="50">50条</option>
+                        <option value="60">60条</option>
+                        <option value="70">70条</option>
+                        <option value="80">80条</option>
+                        <option value="90">90条</option>
+                        <option value="100">100条</option>
                     </select>
                 </div>
             </div>

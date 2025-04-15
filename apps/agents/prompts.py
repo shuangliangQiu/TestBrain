@@ -107,7 +107,7 @@ class TestCaseGeneratorPrompt:
         self.prompt_template = self.prompt_manager.get_test_case_generator_prompt()
     
     def format_messages(self, requirements: str, case_design_methods: str = "", 
-                       case_categories: str = "", knowledge_context: str = "") -> list:
+                       case_categories: str = "", knowledge_context: str = "",case_count: int = 10) -> list:
         """格式化消息
         
         Args:
@@ -115,7 +115,7 @@ class TestCaseGeneratorPrompt:
             case_design_methods: 测试用例设计方法
             case_categories: 测试用例类型
             knowledge_context: 知识库上下文
-            
+            case_count: 生成用例条数
         Returns:
             格式化后的消息列表
         """
@@ -137,6 +137,7 @@ class TestCaseGeneratorPrompt:
             requirements=requirements,
             case_design_methods=case_design_methods,
             case_categories=case_categories,
+            case_count=case_count,
             knowledge_context=knowledge_prompt
         )
 

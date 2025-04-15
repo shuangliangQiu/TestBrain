@@ -14,6 +14,4 @@ def word_to_markdown(input_file, output_file):
     except Exception as e:
         print(f"转换失败: {e}")
 
-# 指定输入的 Word 文件和输出的 Markdown 文件
-input_file = '/Users/zhangxiaoguo/Downloads/Edu-1.4.1-教育空间欢迎信.docx'
-output_file = 'output.md'
+
