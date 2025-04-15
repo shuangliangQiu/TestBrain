@@ -50,7 +50,14 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="case_count">生成用例条数:</label>
+                    <label for="case_count">生成用例条数:
+                        <i class="fas fa-info-circle text-primary" 
+                           data-toggle="tooltip" 
+                           data-html="true"
+                           data-placement="right"
+                           data-original-title="1. 由于大模型机制所限，大模型不一定返回足够数量的用例，比如你指定了100条，但大模型可能仅返回20条。<br>2. 大模型所需生成用例数量越多，耗时越久。">
+                        </i>
+                    </label>
                     <select class="form-control" id="case_count" name="case_count">
                         <option value="10">10条</option>
                         <option value="20">20条</option>
@@ -182,17 +189,41 @@
 .bs-actionsbox .btn-group button {
     width: 50%;
 }
+
+/* 自定义 tooltip 样式 */
+.tooltip-inner {
+    max-width: 300px;
+    padding: 10px;
+    color: #fff;
+    text-align: left;
+    background-color: #333;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* 自定义 tooltip 箭头颜色 */
+.tooltip.bs-tooltip-right .arrow::before {
+    border-right-color: #333;
+}
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 确保jQuery已加载
-    if (typeof $ !== 'undefined') {
-        initializeSelectPickers();
-    } else {
-        console.error('jQuery is not loaded. Make sure it is included before this script.');
-    }
-    
+{% block extra_js %}
+<!-- 确保这段代码在jQuery加载完成后执行 -->
+<script type="text/javascript">
+    // 等待文档和所有资源加载完成
+    window.addEventListener('load', function() {
+        // 初始化所有的tooltip
+        if (typeof $ !== 'undefined') {
+            $('[data-toggle="tooltip"]').tooltip();
+            
+            // 初始化selectpicker
+            initializeSelectPickers();
+        } else {
+            console.error('jQuery is not loaded');
+        }
+    });
+
     function initializeSelectPickers() {
         $('.selectpicker').selectpicker({
             style: '',
@@ -230,8 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
 </script>
+{% endblock %}
+
 <!-- 在这里添加 generate.js 引用 -->
 <script src="{% static 'js/generate.js' %}"></script>
 {% endblock %} 
